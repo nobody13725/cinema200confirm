@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { dbService, subscribeDb } from "../../lib/supabaseClient.js";
+import { authService, dbService, subscribeDb } from "../../lib/supabaseClient.js";
 import { isPastShowtime } from "../../utils/timeUtils.js";
 
-export default function AdminOrders() {
+export default function AdminOrders({ user: propUser, isFullAdmin: propIsFullAdmin }) {
+  const currentUser = propUser || authService.getCurrentUser();
+  const isFullAdmin =
+    typeof propIsFullAdmin === "boolean" ? propIsFullAdmin : authService.isAdmin(currentUser);
+  const actorName = currentUser?.fullName || currentUser?.name || (isFullAdmin ? "Admin" : "Nhân viên");
+
   const [orders, setOrders] = useState([]);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -34,15 +39,25 @@ export default function AdminOrders() {
       }
     }
 
-    dbService.updateOrderStatus(id, newStatus);
+    const updated = dbService.updateOrderStatus(id, newStatus, actorName);
     if (selectedOrder && selectedOrder.id === id) {
-      setSelectedOrder({ ...selectedOrder, orderStatus: newStatus });
+      setSelectedOrder(updated || { ...selectedOrder, orderStatus: newStatus });
     }
-    setActionAlert(`Đã cập nhật trạng thái đơn ${order.ticketCode} sang ${newStatus === "cancelled" ? "Đã hủy" : "Đã sử dụng"} thành công!`);
+    const statusLabel =
+      newStatus === "cancelled"
+        ? "Đã hủy"
+        : newStatus === "confirmed"
+        ? "Đã duyệt vé (Sẵn sàng check-in)"
+        : "Đã sử dụng (Check-in)";
+    setActionAlert(`Đã cập nhật trạng thái đơn ${order.ticketCode} sang ${statusLabel} thành công!`);
     setTimeout(() => setActionAlert(null), 3500);
   };
 
   const handleDeleteOrder = (id, ticketCode) => {
+    if (!isFullAdmin) {
+      alert("Từ chối quyền: Chỉ Quản trị viên (Admin) mới được phép xóa đơn hàng.");
+      return;
+    }
     // TC_ORD_11: Xóa đơn hàng
     if (window.confirm(`Bạn có chắc chắn muốn xóa vĩnh viễn đơn hàng ${ticketCode}? Hành động này không thể hoàn tác.`)) {
       dbService.deleteOrder(id);
@@ -128,15 +143,25 @@ export default function AdminOrders() {
         </div>
       )}
 
-      {/* Stats Cards Section */}
-      <div className="admin-stat-cards" style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 14, marginTop: 16 }}>
-        <div className="stat-card">
-          <div className="stat-title">Doanh thu đã thu</div>
-          <div className="stat-number" style={{ color: "var(--brand-600)", fontSize: 20 }}>
-            {totalRevenueAll.toLocaleString("vi-VN")}đ
+      {/* Stats Cards Section (Nhân viên không xem tổng doanh thu tài chính) */}
+      <div
+        className="admin-stat-cards"
+        style={{
+          display: "grid",
+          gridTemplateColumns: `repeat(${isFullAdmin ? 5 : 4}, 1fr)`,
+          gap: 14,
+          marginTop: 16,
+        }}
+      >
+        {isFullAdmin && (
+          <div className="stat-card">
+            <div className="stat-title">Doanh thu đã thu</div>
+            <div className="stat-number" style={{ color: "var(--brand-600)", fontSize: 20 }}>
+              {totalRevenueAll.toLocaleString("vi-VN")}đ
+            </div>
+            <div className="stat-trend positive">Vé confirmed & used</div>
           </div>
-          <div className="stat-trend positive">Vé confirmed & used</div>
-        </div>
+        )}
         <div className="stat-card">
           <div className="stat-title">Đã thanh toán (Sẵn sàng)</div>
           <div className="stat-number" style={{ color: "var(--green-500)" }}>{confirmedCount}</div>
@@ -219,16 +244,18 @@ export default function AdminOrders() {
           </button>
         </div>
 
-        {/* TC_ORD_12: Doanh thu theo kết quả lọc */}
+        {/* TC_ORD_12: Doanh thu theo kết quả lọc (Chỉ Admin xem doanh thu) */}
         {(filterStatus !== "all" || filterDate || search) && (
           <div style={{ marginTop: 12, padding: "8px 12px", background: "var(--ink-50)", borderRadius: 6, fontSize: 13, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span>
               Kết quả lọc: <strong>{filteredOrders.length}</strong> đơn hàng
               {filterDate && <span> | Ngày: <strong>{filterDate}</strong></span>}
             </span>
-            <span>
-              Tổng doanh thu kết quả lọc: <strong style={{ color: "var(--brand-600)" }}>{filteredRevenue.toLocaleString("vi-VN")}đ</strong>
-            </span>
+            {isFullAdmin && (
+              <span>
+                Tổng doanh thu kết quả lọc: <strong style={{ color: "var(--brand-600)" }}>{filteredRevenue.toLocaleString("vi-VN")}đ</strong>
+              </span>
+            )}
           </div>
         )}
       </div>
@@ -296,21 +323,33 @@ export default function AdminOrders() {
                       >
                         👁️
                       </button>
-                      
-                      {/* TC_ORD_06: Soát vé */}
-                      {ord.orderStatus === "confirmed" && (
+
+                      {/* Duyệt vé chờ xác nhận (pending -> confirmed) */}
+                      {ord.orderStatus === "pending" && (
                         <button
                           className="icon-action-btn"
-                          title="Đánh dấu đã soát vé (Sử dụng)"
-                          onClick={() => handleUpdateStatus(ord.id, "used")}
-                          style={{ background: "var(--green-100)", color: "#197a55" }}
+                          title="Duyệt vé hợp lệ (Xác nhận đã thanh toán)"
+                          onClick={() => handleUpdateStatus(ord.id, "confirmed")}
+                          style={{ background: "#fef3c7", color: "#92400e", fontWeight: 700 }}
                         >
                           ✓
                         </button>
                       )}
 
-                      {/* TC_ORD_07, TC_ORD_10: Hủy vé */}
+                      {/* TC_ORD_06: Soát vé check-in (confirmed -> used) */}
                       {ord.orderStatus === "confirmed" && (
+                        <button
+                          className="icon-action-btn"
+                          title="Duyệt soát vé vào rạp (Check-in)"
+                          onClick={() => handleUpdateStatus(ord.id, "used")}
+                          style={{ background: "var(--green-100)", color: "#197a55" }}
+                        >
+                          🎫
+                        </button>
+                      )}
+
+                      {/* TC_ORD_07, TC_ORD_10: Hủy vé */}
+                      {(ord.orderStatus === "pending" || ord.orderStatus === "confirmed") && (
                         <button
                           className="icon-action-btn delete"
                           title={isPast ? "Không thể hủy vé vì suất chiếu đã diễn ra" : "Hủy vé / Hoàn tiền"}
@@ -322,14 +361,16 @@ export default function AdminOrders() {
                         </button>
                       )}
 
-                      {/* TC_ORD_11: Xóa đơn hàng */}
-                      <button
-                        className="icon-action-btn delete"
-                        title="Xóa đơn hàng vĩnh viễn"
-                        onClick={() => handleDeleteOrder(ord.id, ord.ticketCode)}
-                      >
-                        🗑️
-                      </button>
+                      {/* TC_ORD_11: Xóa đơn hàng (CHỈ ADMIN MỚI ĐƯỢC XÓA) */}
+                      {isFullAdmin && (
+                        <button
+                          className="icon-action-btn delete"
+                          title="Xóa đơn hàng vĩnh viễn (Chỉ Admin)"
+                          onClick={() => handleDeleteOrder(ord.id, ord.ticketCode)}
+                        >
+                          🗑️
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -405,8 +446,25 @@ export default function AdminOrders() {
               <p><strong>Trạng thái vé:</strong> {getStatusBadge(selectedOrder.orderStatus)}</p>
             </div>
 
-            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 20, gap: 10 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 20, gap: 8, flexWrap: "wrap" }}>
+              {selectedOrder.orderStatus === "pending" && (
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={() => handleUpdateStatus(selectedOrder.id, "confirmed")}
+                >
+                  ✓ Duyệt vé hợp lệ
+                </button>
+              )}
               {selectedOrder.orderStatus === "confirmed" && (
+                <button
+                  className="btn btn-primary btn-sm"
+                  style={{ background: "#059669" }}
+                  onClick={() => handleUpdateStatus(selectedOrder.id, "used")}
+                >
+                  🎫 Duyệt check-in
+                </button>
+              )}
+              {(selectedOrder.orderStatus === "pending" || selectedOrder.orderStatus === "confirmed") && (
                 <button
                   className="btn btn-secondary btn-sm"
                   style={{ color: "var(--red-500)" }}

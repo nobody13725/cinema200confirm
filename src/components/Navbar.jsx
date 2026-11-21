@@ -46,7 +46,8 @@ export default function Navbar({ route, go, user, onLogout }) {
         </form>
 
         <div className="nav-right">
-          {/* Quick Admin Access Button - ONLY VISIBLE TO LOGGED IN ADMIN */}
+
+          {/* Quick Admin / Staff Access Button */}
           {user && (user.role === "admin" || user.role === "administrator") && (
             <button
               className="btn btn-sm"
@@ -65,6 +66,24 @@ export default function Navbar({ route, go, user, onLogout }) {
               🛡️ Quản trị Admin
             </button>
           )}
+          {user && (user.role === "employee" || user.role === "staff") && (
+            <button
+              className="btn btn-sm"
+              style={{
+                background: "#f5f3ff",
+                color: "#6d28d9",
+                border: "1px solid #ddd6fe",
+                fontWeight: 700,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+              }}
+              onClick={() => go("admin")}
+              title="Cổng Nhân viên: Duyệt vé & Kiểm duyệt"
+            >
+              🎫 Cổng Nhân viên
+            </button>
+          )}
 
           {user ? (
             <>
@@ -75,7 +94,7 @@ export default function Navbar({ route, go, user, onLogout }) {
                 title="Hồ sơ tài khoản & Vé của bạn"
               >
                 <span>👤 {user.name || user.fullName}</span>
-                {user.role === "admin" ? (
+                {user.role === "admin" || user.role === "administrator" ? (
                   <span
                     style={{
                       fontSize: 10.5,
@@ -88,6 +107,20 @@ export default function Navbar({ route, go, user, onLogout }) {
                     }}
                   >
                     ADMIN
+                  </span>
+                ) : user.role === "employee" || user.role === "staff" ? (
+                  <span
+                    style={{
+                      fontSize: 10.5,
+                      background: "#6d28d9",
+                      color: "#fff",
+                      padding: "1px 6px",
+                      borderRadius: 4,
+                      fontWeight: 700,
+                      letterSpacing: 0.5,
+                    }}
+                  >
+                    NHÂN VIÊN
                   </span>
                 ) : (
                   <span

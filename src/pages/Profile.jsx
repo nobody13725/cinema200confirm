@@ -6,18 +6,25 @@ function formatVnd(n) {
 }
 
 const STATUS_LABEL = {
-  confirmed: "Đã thanh toán",
-  paid: "Đã thanh toán",
-  used: "Đã xem / Check-in",
-  pending: "Chờ thanh toán",
+  confirmed: "Đã duyệt · Đã xem",
+  paid: "Đã duyệt · Đã xem",
+  used: "Đã soát vé · Đã xem",
+  pending: "Chờ nhân viên duyệt",
   cancelled: "Đã hủy",
 };
 
-export default function Profile({ go, user, onLogout }) {
-  const [tab, setTab] = useState("history"); // history | info | password | reviews
+export default function Profile({ go, user, onLogout, params }) {
+  const [tab, setTab] = useState(params?.tab || "history"); // history | watched | info | password | reviews
   const [orders, setOrders] = useState([]);
+  const [watchHistory, setWatchHistory] = useState([]);
   const [comments, setComments] = useState([]);
   const [allOrdersCount, setAllOrdersCount] = useState(0);
+
+  useEffect(() => {
+    if (params?.tab) {
+      setTab(params.tab);
+    }
+  }, [params?.tab]);
 
   // Form thông tin cá nhân (TC_PRF_01 đến TC_PRF_05)
   const [info, setInfo] = useState({
@@ -66,6 +73,7 @@ export default function Profile({ go, user, onLogout }) {
     });
 
     setOrders(userOrders);
+    setWatchHistory(dbService.getUserWatchHistory(user));
     setComments(userComments);
   };
 
@@ -234,6 +242,9 @@ export default function Profile({ go, user, onLogout }) {
             <button className={tab === "history" ? "active" : ""} onClick={() => setTab("history")}>
               🎟️ Lịch sử vé ({orders.length})
             </button>
+            <button className={tab === "watched" ? "active" : ""} onClick={() => setTab("watched")}>
+              🎬 Lịch sử đã xem ({watchHistory.length})
+            </button>
             <button className={tab === "info" ? "active" : ""} onClick={() => setTab("info")}>
               👤 Thông tin cá nhân
             </button>
@@ -337,13 +348,13 @@ export default function Profile({ go, user, onLogout }) {
                       </div>
                       <div style={{ textAlign: "right", display: "flex", flexDirection: "column", gap: 6, alignItems: "flex-end" }}>
                         <span
-                          className={`badge ${isCancelled ? "badge-red" : "badge-green"}`}
+                          className={`badge ${isCancelled ? "badge-red" : b.orderStatus === "pending" ? "badge-amber" : "badge-green"}`}
                           style={{ display: "inline-block" }}
                         >
-                          {STATUS_LABEL[b.orderStatus] || STATUS_LABEL[b.status] || "Đã thanh toán"}
+                          {STATUS_LABEL[b.orderStatus] || STATUS_LABEL[b.status] || "Đã duyệt · Đã xem"}
                         </span>
 
-                        <div style={{ display: "flex", gap: 6 }}>
+                        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "flex-end" }}>
                           {!isCancelled && b.ticketQrUrl && (
                             <button
                               className="btn btn-ghost btn-sm"
@@ -365,6 +376,17 @@ export default function Profile({ go, user, onLogout }) {
                             </button>
                           )}
 
+                          {(b.orderStatus === "confirmed" || b.orderStatus === "used") && b.filmId && (
+                            <button
+                              className="btn btn-secondary btn-sm"
+                              style={{ fontSize: 12, padding: "4px 8px", whiteSpace: "nowrap", color: "#15803d", borderColor: "#bbf7d0", background: "#f0fdf4" }}
+                              onClick={() => go("movie", { id: b.filmId, openReview: true })}
+                              title="Vé đã được duyệt · Xem chi tiết & viết đánh giá phim"
+                            >
+                              ✍️ Đánh giá phim
+                            </button>
+                          )}
+
                           {/* TC_PRF_10 & TC_PRF_11: Hủy vé trước giờ chiếu */}
                           {!isCancelled && (
                             past ? (
@@ -374,7 +396,7 @@ export default function Profile({ go, user, onLogout }) {
                             ) : (
                               <button
                                 className="btn btn-secondary btn-sm"
-                                style={{ fontSize: 12, padding: "4px 8px", color: "var(--red-500)", borderColor: "#fecaca" }}
+                                style={{ fontSize: 12, padding: "4px 8px", color: "var(--red-500)", borderColor: "#fecaca", whiteSpace: "nowrap" }}
                                 onClick={() => handleCancelTicket(b)}
                               >
                                 ✕ Hủy vé
@@ -382,6 +404,115 @@ export default function Profile({ go, user, onLogout }) {
                             )
                           )}
                         </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          )}
+
+          {/* Lịch sử phim đã xem của người dùng (Chỉ ghi nhận khi vé đã được nhân viên duyệt hoặc soát vào rạp) */}
+          {tab === "watched" && (
+            <div className="card">
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, flexWrap: "wrap", gap: 8 }}>
+                <div>
+                  <h3 style={{ fontSize: 16, margin: 0 }}>Lịch sử phim đã xem ({watchHistory.length})</h3>
+                  <p style={{ fontSize: 12.5, color: "var(--ink-500)", margin: "4px 0 0" }}>
+                    Phim tự động được tính là đã xem sau khi nhân viên duyệt vé hoặc soát vé vào rạp. Chỉ phim đã xem mới đủ điều kiện viết đánh giá.
+                  </p>
+                </div>
+                <button className="btn btn-secondary btn-sm" onClick={() => go("movies")}>
+                  🎬 Xem phim khác
+                </button>
+              </div>
+
+              {watchHistory.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "36px 20px", color: "var(--ink-500)" }}>
+                  <div style={{ fontSize: 36, marginBottom: 8 }}>🍿</div>
+                  <div style={{ fontWeight: 600, color: "var(--ink-800)", marginBottom: 4 }}>
+                    Bạn chưa có bộ phim nào trong lịch sử đã xem
+                  </div>
+                  <p style={{ fontSize: 13.5 }}>
+                    Đặt vé xem phim và đợi nhân viên duyệt vé để ghi nhận lịch sử xem phim &amp; mở khóa quyền đánh giá.
+                  </p>
+                </div>
+              ) : (
+                watchHistory.map((w) => {
+                  const seatList = Array.isArray(w.seats)
+                    ? w.seats.map((s) => s.seatKey || s).join(", ")
+                    : w.seats || "—";
+                  return (
+                    <div
+                      className="ticket-card"
+                      key={w.orderId}
+                      style={{ marginBottom: 12, borderLeft: "4px solid #10b981" }}
+                    >
+                      <div
+                        className="ticket-poster"
+                        style={{
+                          background: "var(--brand-50)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          overflow: "hidden",
+                        }}
+                      >
+                        {w.posterUrl && w.posterUrl.startsWith("http") ? (
+                          <img src={w.posterUrl} alt={w.filmTitle} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        ) : (
+                          "🎬"
+                        )}
+                      </div>
+                      <div className="ticket-info">
+                        <div className="title" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                          <span>{w.filmTitle}</span>
+                          <span className="badge badge-green" style={{ fontSize: 11 }}>
+                            {w.orderStatus === "used" ? "✓ Đã check-in tại rạp" : "✓ Vé đã được duyệt"}
+                          </span>
+                        </div>
+                        <div className="meta">
+                          Mã vé: <strong>#{w.ticketCode}</strong> · {w.cinemaName} ({w.roomName})
+                          <br />
+                          Suất: {w.showtimeDate} · {w.showtimeTime} · Ghế: <strong>{seatList}</strong>
+                          {(w.checkedInBy || w.approvedBy) && (
+                            <>
+                              <br />
+                              <span style={{ color: "var(--ink-500)" }}>
+                                Xác nhận bởi: <strong>{w.checkedInBy || w.approvedBy}</strong>
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <div style={{ textAlign: "right", display: "flex", flexDirection: "column", gap: 6, alignItems: "flex-end" }}>
+                        <span style={{ fontSize: 11.5, color: "var(--ink-500)" }}>
+                          Ghi nhận: {w.watchedAt ? new Date(w.watchedAt).toLocaleDateString("vi-VN") : "—"}
+                        </span>
+                        {w.review ? (
+                          <div style={{ textAlign: "right" }}>
+                            <span className="badge badge-purple" style={{ display: "inline-block" }}>
+                              ★ Đã đánh giá ({w.review.rate}/5)
+                            </span>
+                            <div>
+                              <button
+                                className="btn btn-ghost btn-sm"
+                                style={{ fontSize: 12, padding: "2px 6px", marginTop: 4 }}
+                                onClick={() => go("movie", { id: w.filmId })}
+                              >
+                                Xem chi tiết phim
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <button
+                            className="btn btn-primary btn-sm"
+                            style={{ fontSize: 12, padding: "5px 10px", whiteSpace: "nowrap" }}
+                            onClick={() => go("movie", { id: w.filmId, openReview: true })}
+                          >
+                            ✍️ Đánh giá phim ngay
+                          </button>
+                        )}
                       </div>
                     </div>
                   );
@@ -536,7 +667,7 @@ export default function Profile({ go, user, onLogout }) {
           {/* Đánh giá của tôi */}
           {tab === "reviews" && (
             <div className="card">
-              <h3 style={{ fontSize: 16, marginBottom: 18 }}>Đánh giá phim bạn đã đóng góp ({comments.length})</h3>
+              <h3 style={{ fontSize: 16, marginBottom: 18 }}>Lịch sử đánh giá phim của bạn ({comments.length})</h3>
               {comments.length === 0 ? (
                 <div style={{ textAlign: "center", padding: "32px 20px", color: "var(--ink-500)" }}>
                   <div style={{ fontSize: 32, marginBottom: 8 }}>⭐</div>
@@ -550,13 +681,37 @@ export default function Profile({ go, user, onLogout }) {
               ) : (
                 comments.map((c) => (
                   <div className="review-row" key={c.id}>
-                    <div className="review-head">
-                      <span style={{ fontWeight: 700, color: "var(--brand-700)" }}>{c.filmTitle}</span>
-                      <span className="review-stars">{"★".repeat(c.rate)}</span>
+                    <div className="review-head" style={{ justifyContent: "space-between", alignItems: "center" }}>
+                      <button
+                        type="button"
+                        onClick={() => c.filmId && go("movie", { id: c.filmId })}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          padding: 0,
+                          fontWeight: 700,
+                          color: "var(--brand-700)",
+                          cursor: c.filmId ? "pointer" : "default",
+                          textAlign: "left",
+                        }}
+                      >
+                        {c.filmTitle || "Phim Movix"}
+                      </button>
+                      <span className="review-stars">{"★".repeat(c.rate || 5)} ({c.rate || 5}/5)</span>
                     </div>
                     <p className="review-text">{c.content}</p>
-                    <div style={{ fontSize: 11.5, color: "var(--ink-400)", marginTop: 4 }}>
-                      Đăng ngày: {new Date(c.createdAt || Date.now()).toLocaleDateString("vi-VN")}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 11.5, color: "var(--ink-400)", marginTop: 4 }}>
+                      <span>Đăng ngày: {new Date(c.createdAt || Date.now()).toLocaleDateString("vi-VN")}</span>
+                      {c.filmId && (
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-sm"
+                          style={{ padding: "2px 8px", fontSize: 11.5 }}
+                          onClick={() => go("movie", { id: c.filmId })}
+                        >
+                          Xem phim →
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))

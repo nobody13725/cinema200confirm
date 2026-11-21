@@ -17,7 +17,7 @@ export default function Footer({ go }) {
             <a onClick={() => go("showtimes")}>Đặt vé online</a>
             <a onClick={() => go("showtimes")}>Lịch chiếu phim</a>
             <a onClick={() => go("cinemas")}>Thông tin rạp</a>
-            <a onClick={() => go("home")}>Khuyến mãi</a>
+            <a onClick={() => go("promotions")}>Khuyến mãi</a>
           </div>
         </div>
         <div>

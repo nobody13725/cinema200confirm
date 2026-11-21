@@ -84,7 +84,7 @@ export default function Login({ go, goBack, onLogin, params }) {
     } else {
       // Người dùng thường không được chuyển vào admin dù redirect có là admin
       const target = params?.redirect === "admin" ? "profile" : params?.redirect || "home";
-      go(target);
+      go(target, params?.redirectParams || {});
     }
   }
 
@@ -109,7 +109,12 @@ export default function Login({ go, goBack, onLogin, params }) {
     }
 
     onLogin(target);
-    if (target.role === "admin" || target.role === "administrator") {
+    if (
+      target.role === "admin" ||
+      target.role === "administrator" ||
+      target.role === "employee" ||
+      target.role === "staff"
+    ) {
       go("admin");
     } else {
       go("home");

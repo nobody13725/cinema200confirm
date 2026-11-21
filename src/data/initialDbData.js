@@ -1970,5 +1970,68 @@ export const INITIAL_ORDERS = [
     paymentStatus: "paid",
     orderStatus: "used",
     createdAt: "2026-09-03T09:10:00Z"
+  },
+  {
+    id: "ord-4",
+    ticketCode: "MVX-77410",
+    userId: "usr-1",
+    userName: "Nguyễn Toàn Thắng",
+    phone: "0987654321",
+    filmId: "film-2",
+    filmTitle: "Dune: Part Two",
+    posterUrl: "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=600&q=80",
+    cinemaId: "cin-1",
+    cinemaName: "CGV Vincom Center Bà Triệu",
+    roomName: "Phòng 2 (IMAX Laser)",
+    city: "Hà Nội",
+    showtimeDate: d1,
+    showtimeTime: "19:00",
+    seats: [
+      { seatKey: "E5", type: "standard", unitPrice: 120000 },
+      { seatKey: "E6", type: "standard", unitPrice: 120000 }
+    ],
+    comboFoods: [
+      { comboId: "cb-1", name: "Combo Solo Bắp Bơ (L) + 1 Coca", quantity: 1, price: 79000 }
+    ],
+    seatSubtotal: 240000,
+    comboSubtotal: 79000,
+    promotionCode: null,
+    discountAmount: 0,
+    totalAmount: 319000,
+    ticketQrUrl: "https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=MVX-77410",
+    paymentMethod: "Thanh toán tại quầy",
+    paymentStatus: "pending",
+    orderStatus: "pending",
+    createdAt: getRecentTimestamp(0, 9, 30)
+  },
+  {
+    id: "ord-5",
+    ticketCode: "MVX-88320",
+    userId: "usr-2",
+    userName: "Lê Phương Thảo",
+    phone: "0901112233",
+    filmId: "film-4",
+    filmTitle: "Spider-Man: Across the Spider-Verse",
+    posterUrl: "https://images.unsplash.com/photo-1635805737707-575885ab0820?auto=format&fit=crop&w=600&q=80",
+    cinemaId: "cin-4",
+    cinemaName: "Galaxy Cinema Nguyễn Du",
+    roomName: "Phòng 1 (Dolby Atmos)",
+    city: "TP. Hồ Chí Minh",
+    showtimeDate: d1,
+    showtimeTime: "20:15",
+    seats: [
+      { seatKey: "F7", type: "standard", unitPrice: 95000 }
+    ],
+    comboFoods: [],
+    seatSubtotal: 95000,
+    comboSubtotal: 0,
+    promotionCode: null,
+    discountAmount: 0,
+    totalAmount: 95000,
+    ticketQrUrl: "https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=MVX-88320",
+    paymentMethod: "PayOS",
+    paymentStatus: "paid",
+    orderStatus: "confirmed",
+    createdAt: getRecentTimestamp(0, 10, 15)
   }
 ];

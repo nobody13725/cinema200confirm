@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import AdminMovies from "./AdminMovies.jsx";
 import AdminCinemas from "./AdminCinemas.jsx";
 import AdminRooms from "./AdminRooms.jsx";
@@ -6,12 +6,41 @@ import AdminShowtimes from "./AdminShowtimes.jsx";
 import AdminUsers from "./AdminUsers.jsx";
 import AdminComments from "./AdminComments.jsx";
 import AdminOrders from "./AdminOrders.jsx";
+import AdminTicketApproval from "./AdminTicketApproval.jsx";
+import AdminWatchHistory from "./AdminWatchHistory.jsx";
 import AdminPromotions from "./AdminPromotions.jsx";
 import AdminReports from "./AdminReports.jsx";
 import AdminSupabase from "./AdminSupabase.jsx";
+import AdminSVD from "./AdminSVD.jsx";
 
-export default function AdminLayout({ user, onExitAdmin, go, goBack }) {
-  const [activeTab, setActiveTab] = useState("movies");
+const EMPLOYEE_ALLOWED_TABS = new Set(["ticketApproval", "orders", "watchHistory", "comments"]);
+
+export default function AdminLayout({ user, onExitAdmin, go, goBack, params }) {
+  const isFullAdmin = user?.role === "admin" || user?.role === "administrator";
+  const isEmployee = user?.role === "employee" || user?.role === "staff";
+
+  const requestedTab = params?.tab;
+  const initialTab =
+    requestedTab && (isFullAdmin || EMPLOYEE_ALLOWED_TABS.has(requestedTab))
+      ? requestedTab
+      : isFullAdmin
+      ? "movies"
+      : "ticketApproval";
+
+  const [activeTab, setActiveTab] = useState(initialTab);
+  const [forbiddenTab, setForbiddenTab] = useState("");
+
+  useEffect(() => {
+    if (params?.tab && (isFullAdmin || EMPLOYEE_ALLOWED_TABS.has(params.tab))) {
+      setActiveTab(params.tab);
+    }
+  }, [params?.tab, isFullAdmin]);
+
+  useEffect(() => {
+    if (!isFullAdmin && !EMPLOYEE_ALLOWED_TABS.has(activeTab)) {
+      setActiveTab("ticketApproval");
+    }
+  }, [isFullAdmin, activeTab]);
 
   const handleExit = () => {
     if (typeof onExitAdmin === "function") {
@@ -24,9 +53,6 @@ export default function AdminLayout({ user, onExitAdmin, go, goBack }) {
       window.history.back();
     }
   };
-
-  const isFullAdmin = user?.role === "admin" || user?.role === "administrator";
-  const isEmployee = user?.role === "employee" || user?.role === "staff";
 
   // Bảo vệ phân quyền chặt chẽ bên trong AdminLayout
   if (!user || (!isFullAdmin && !isEmployee)) {
@@ -47,16 +73,19 @@ export default function AdminLayout({ user, onExitAdmin, go, goBack }) {
   }
 
   const allNavItems = [
-    { id: "movies", label: "Quản lý phim", icon: "🎬", uc: "UC12", roles: ["admin", "employee"] },
+    { id: "ticketApproval", label: "Duyệt vé & Soát vé", icon: "🎫", uc: "TICKET", roles: ["admin", "employee"] },
+    { id: "orders", label: "Quản lý đặt vé", icon: "🎟️", uc: "UC19", roles: ["admin", "employee"] },
+    { id: "watchHistory", label: "Lịch sử người xem", icon: "📜", uc: "WATCH", roles: ["admin", "employee"] },
+    { id: "comments", label: "Quản lý bình luận", icon: "💬", uc: "UC17", roles: ["admin", "employee"] },
+    { id: "movies", label: "Quản lý phim", icon: "🎬", uc: "UC12", roles: ["admin"] },
     { id: "cinemas", label: "Quản lý rạp chiếu", icon: "🏢", uc: "UC13", roles: ["admin"] },
     { id: "rooms", label: "Quản lý phòng chiếu", icon: "💺", uc: "UC14", roles: ["admin"] },
-    { id: "showtimes", label: "Quản lý suất chiếu", icon: "🕒", uc: "UC15", roles: ["admin", "employee"] },
+    { id: "showtimes", label: "Quản lý suất chiếu", icon: "🕒", uc: "UC15", roles: ["admin"] },
     { id: "customers", label: "Quản lý khách hàng", icon: "👤", uc: "CUS", roles: ["admin"] },
     { id: "employees", label: "Quản lý nhân viên", icon: "💼", uc: "EMP", roles: ["admin"] },
-    { id: "comments", label: "Quản lý bình luận", icon: "💬", uc: "UC17", roles: ["admin", "employee"] },
-    { id: "orders", label: "Quản lý đặt vé", icon: "🎟️", uc: "UC19", roles: ["admin", "employee"] },
     { id: "promotions", label: "Quản lý khuyến mãi", icon: "🏷️", uc: "UC18", roles: ["admin"] },
     { id: "reports", label: "Thống kê & báo cáo", icon: "📊", uc: "UC20", roles: ["admin"] },
+    { id: "svd", label: "Gợi ý SVD & Setting", icon: "🧠", uc: "SVD", roles: ["admin"] },
     { id: "supabase", label: "Cơ sở dữ liệu Supabase", icon: "⚡", uc: "DB", roles: ["admin"] },
   ];
 
@@ -64,12 +93,52 @@ export default function AdminLayout({ user, onExitAdmin, go, goBack }) {
     isFullAdmin ? true : item.roles.includes("employee")
   );
 
+  const handleSelectTab = (tabId) => {
+    if (!isFullAdmin && !EMPLOYEE_ALLOWED_TABS.has(tabId)) {
+      setForbiddenTab(tabId);
+      return;
+    }
+    setForbiddenTab("");
+    setActiveTab(tabId);
+  };
+
   const renderContent = () => {
+    if (!isFullAdmin && (forbiddenTab || !EMPLOYEE_ALLOWED_TABS.has(activeTab))) {
+      return (
+        <div className="admin-page">
+          <div className="admin-card" style={{ padding: 36, textAlign: "center", border: "1px solid #fecaca", background: "#fff5f5" }}>
+            <div style={{ fontSize: 42, marginBottom: 10 }}>🚫</div>
+            <h3 style={{ color: "#991b1b", marginBottom: 8 }}>403 · Chỉ dành riêng cho Quản trị viên (Admin)</h3>
+            <p style={{ fontSize: 14, color: "#7f1d1d", marginBottom: 18 }}>
+              Tài khoản Nhân viên chỉ được phép Duyệt vé, Soát vé và Kiểm duyệt bình luận. Bạn không có quyền truy cập chức năng quản trị hệ thống này.
+            </p>
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={() => {
+                setForbiddenTab("");
+                setActiveTab("ticketApproval");
+              }}
+            >
+              ← Quay về Duyệt vé &amp; Soát vé
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     switch (activeTab) {
+      case "ticketApproval":
+        return <AdminTicketApproval user={user} isFullAdmin={isFullAdmin} />;
+      case "orders":
+        return <AdminOrders user={user} isFullAdmin={isFullAdmin} />;
+      case "watchHistory":
+        return <AdminWatchHistory user={user} isFullAdmin={isFullAdmin} />;
+      case "comments":
+        return <AdminComments />;
       case "movies":
         return <AdminMovies />;
       case "cinemas":
-        return <AdminCinemas />;
+        return <AdminCinemas onSelectTab={handleSelectTab} />;
       case "rooms":
         return <AdminRooms />;
       case "showtimes":
@@ -80,18 +149,16 @@ export default function AdminLayout({ user, onExitAdmin, go, goBack }) {
         return <AdminUsers initialRoleFilter="employee" key="employees" />;
       case "users":
         return <AdminUsers initialRoleFilter="all" key="users" />;
-      case "comments":
-        return <AdminComments />;
-      case "orders":
-        return <AdminOrders />;
       case "promotions":
         return <AdminPromotions />;
       case "reports":
         return <AdminReports />;
+      case "svd":
+        return <AdminSVD />;
       case "supabase":
         return <AdminSupabase />;
       default:
-        return <AdminMovies />;
+        return isFullAdmin ? <AdminMovies /> : <AdminTicketApproval user={user} isFullAdmin={isFullAdmin} />;
     }
   };
 
@@ -101,7 +168,10 @@ export default function AdminLayout({ user, onExitAdmin, go, goBack }) {
       <aside className="admin-sidebar">
         <div className="admin-sidebar-header">
           <div className="brand-logo" style={{ color: "var(--brand-500)", fontWeight: 900, fontSize: 22 }}>
-            MOVIX <span style={{ fontSize: 13, color: "var(--ink-500)", fontWeight: 500 }}>ADMIN</span>
+            MOVIX{" "}
+            <span style={{ fontSize: 13, color: isFullAdmin ? "var(--ink-500)" : "#6d28d9", fontWeight: 600 }}>
+              {isFullAdmin ? "ADMIN" : "STAFF"}
+            </span>
           </div>
         </div>
 
@@ -110,7 +180,7 @@ export default function AdminLayout({ user, onExitAdmin, go, goBack }) {
             <button
               key={item.id}
               className={`admin-nav-item ${activeTab === item.id ? "active" : ""}`}
-              onClick={() => setActiveTab(item.id)}
+              onClick={() => handleSelectTab(item.id)}
             >
               <span className="icon">{item.icon}</span>
               <span className="label">{item.label}</span>
@@ -131,7 +201,9 @@ export default function AdminLayout({ user, onExitAdmin, go, goBack }) {
         {/* Top bar */}
         <header className="admin-topbar">
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 13, color: "var(--ink-500)" }}>Bảng điều khiển quản trị /</span>
+            <span style={{ fontSize: 13, color: "var(--ink-500)" }}>
+              {isFullAdmin ? "Bảng điều khiển quản trị /" : "Cổng nhân viên rạp /"}
+            </span>
             <strong style={{ fontSize: 14, color: "var(--ink-900)" }}>
               {navItems.find((n) => n.id === activeTab)?.label}
             </strong>
@@ -144,7 +216,7 @@ export default function AdminLayout({ user, onExitAdmin, go, goBack }) {
                   width: 32,
                   height: 32,
                   borderRadius: "50%",
-                  background: "var(--brand-500)",
+                  background: isFullAdmin ? "var(--brand-500)" : "#6d28d9",
                   color: "white",
                   display: "flex",
                   alignItems: "center",
@@ -153,11 +225,15 @@ export default function AdminLayout({ user, onExitAdmin, go, goBack }) {
                   fontSize: 13,
                 }}
               >
-                AD
+                {isFullAdmin ? "AD" : "NV"}
               </div>
               <div style={{ fontSize: 13 }}>
-                <div style={{ fontWeight: 600, color: "var(--ink-900)" }}>{user?.fullName || "Quản trị viên"}</div>
-                <div style={{ fontSize: 11, color: "var(--ink-500)" }}>Toàn quyền hệ thống</div>
+                <div style={{ fontWeight: 600, color: "var(--ink-900)" }}>
+                  {user?.fullName || (isFullAdmin ? "Quản trị viên" : "Nhân viên rạp")}
+                </div>
+                <div style={{ fontSize: 11, color: "var(--ink-500)" }}>
+                  {isFullAdmin ? "Toàn quyền hệ thống" : "Nhân viên · Duyệt vé & Kiểm duyệt"}
+                </div>
               </div>
             </div>
 

@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { dbService, subscribeDb } from "../lib/supabaseClient.js";
 import MovieCard from "../components/MovieCard.jsx";
+import { normalizeDateToYMD } from "../utils/timeUtils.js";
 
 const PAGE_SIZE = 6;
 
@@ -8,10 +9,10 @@ export default function Movies({ go, params }) {
   const [films, setFilms] = useState([]);
   const [categories, setCategories] = useState([]);
   const [showtimes, setShowtimes] = useState([]);
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState(params?.status || "all");
   const [selectedCat, setSelectedCat] = useState(params?.category || "all");
-  const [selectedDate, setSelectedDate] = useState("all");
-  const [selectedAge, setSelectedAge] = useState("all");
+  const [selectedDate, setSelectedDate] = useState(params?.date ? normalizeDateToYMD(params.date) : "all");
+  const [selectedAge, setSelectedAge] = useState(params?.age || "all");
   const [q, setQ] = useState(params?.q || "");
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -26,11 +27,20 @@ export default function Movies({ go, params }) {
     return subscribeDb(loadData);
   }, []);
 
+  useEffect(() => {
+    if (!params) return;
+    if (params.category !== undefined) setSelectedCat(params.category || "all");
+    if (params.q !== undefined) setQ(params.q || "");
+    if (params.date !== undefined) setSelectedDate(params.date ? normalizeDateToYMD(params.date) : "all");
+    if (params.age !== undefined) setSelectedAge(params.age || "all");
+    if (params.status !== undefined) setStatusFilter(params.status || "all");
+  }, [params?.category, params?.q, params?.date, params?.age, params?.status]);
+
   // Available dates from showtimes
   const availableDates = useMemo(() => {
     const dates = new Set();
     showtimes.forEach((st) => {
-      if (st.date) dates.add(st.date);
+      if (st.date) dates.add(normalizeDateToYMD(st.date));
     });
     return Array.from(dates).sort();
   }, [showtimes]);
@@ -59,7 +69,7 @@ export default function Movies({ go, params }) {
       // Phải có ít nhất 1 suất chiếu vào ngày đã chọn
       const matchDate =
         selectedDate === "all" ||
-        showtimes.some((st) => st.filmId === f.id && st.date === selectedDate);
+        showtimes.some((st) => st.filmId === f.id && normalizeDateToYMD(st.date) === selectedDate);
 
       // 5. Độ tuổi (TC_SRCH_06)
       const matchAge = selectedAge === "all" || f.ageRating === selectedAge;

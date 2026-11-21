@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { dbService, subscribeDb } from "../lib/supabaseClient.js";
+import { dbService, subscribeDb, cfService } from "../lib/supabaseClient.js";
 import MovieCard from "../components/MovieCard.jsx";
 import PromoBannerCarousel from "../components/PromoBannerCarousel.jsx";
 import { FALLBACK_POSTER, FALLBACK_CINEMA, FALLBACK_BANNER, handleImageError } from "../utils/imageFallback";
 
-export default function Home({ go }) {
+export default function Home({ go, user }) {
   const [films, setFilms] = useState([]);
   const [cinemas, setCinemas] = useState([]);
   const [showtimes, setShowtimes] = useState([]);
@@ -12,6 +12,7 @@ export default function Home({ go }) {
   const [banners, setBanners] = useState([]);
   const [promotions, setPromotions] = useState([]);
   const [copiedCode, setCopiedCode] = useState("");
+  const [viewerRecs, setViewerRecs] = useState(null);
 
   const [selectedFilm, setSelectedFilm] = useState("");
   const [selectedCity, setSelectedCity] = useState("");
@@ -25,6 +26,29 @@ export default function Home({ go }) {
     month: "2-digit",
   });
 
+  const loadViewerRecs = () => {
+    const uid = user?.id || "guest";
+    Promise.allSettled([
+      cfService.getRecommendationsByUser(uid, 5),
+      cfService.getViewerRecommendations(user),
+    ]).then(([aiRes, cfgRes]) => {
+      const aiData = aiRes.status === "fulfilled" ? aiRes.value : null;
+      const cfgData = cfgRes.status === "fulfilled" ? cfgRes.value : null;
+      if (aiData && Array.isArray(aiData.recommendations)) {
+        setViewerRecs({
+          enabled: cfgData ? cfgData.enabled !== false : true,
+          section_title: cfgData?.section_title || "Gợi ý phim dành riêng cho bạn",
+          is_personalized: aiData.strategy === "svd",
+          strategy: aiData.strategy,
+          user_id: aiData.user_id,
+          recommendations: aiData.recommendations,
+        });
+      } else if (cfgData) {
+        setViewerRecs(cfgData);
+      }
+    });
+  };
+
   const loadData = () => {
     setFilms(dbService.getFilms());
     setCinemas(dbService.getCinemas());
@@ -32,6 +56,7 @@ export default function Home({ go }) {
     setCities(dbService.getCities());
     setBanners(dbService.getBanners());
     setPromotions(dbService.getPromotions());
+    loadViewerRecs();
   };
 
   const handleCopyCode = (e, code) => {
@@ -48,7 +73,7 @@ export default function Home({ go }) {
   useEffect(() => {
     loadData();
     return subscribeDb(loadData);
-  }, []);
+  }, [user?.id, user?.email]);
 
   function findShowtimes(e) {
     e.preventDefault();
@@ -121,6 +146,85 @@ export default function Home({ go }) {
       <section className="container" style={{ marginTop: 10 }}>
         <PromoBannerCarousel banners={banners} go={go} />
       </section>
+
+      {/* Top 5 Gợi ý phim từ hệ thống AI (GET /api/recommendations/:userId) */}
+      {viewerRecs?.enabled !== false && (viewerRecs?.recommendations || []).length > 0 && (
+        <section className="section container" style={{ paddingBottom: 8 }}>
+          <div className="section-head" style={{ flexWrap: "wrap", gap: 12 }}>
+            <div>
+              <h2>
+                {user
+                  ? `${viewerRecs.section_title || "Gợi ý phim dành riêng cho bạn"} — ${user.fullName || user.name}`
+                  : "Top 5 phim gợi ý nổi bật tại Movix"}
+              </h2>
+              <p style={{ fontSize: 13.5, color: "var(--ink-500)", marginTop: 2 }}>
+                {user && viewerRecs.is_personalized
+                  ? `Đề xuất Top 5 dựa trên lịch sử đánh giá riêng của tài khoản ${user.email || user.id} (đã loại trừ phim bạn đã đánh giá/xem)`
+                  : user
+                  ? "Tài khoản mới chưa có đủ lịch sử đánh giá — hiển thị Top 5 phim được khán giả đánh giá cao nhất"
+                  : "Đăng nhập để nhận Top 5 gợi ý cá nhân hóa theo lịch sử đánh giá riêng của bạn"}
+              </p>
+            </div>
+            {!user && (
+              <button className="link-more" onClick={() => go("login")}>
+                Đăng nhập để cá nhân hóa →
+              </button>
+            )}
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))",
+              gap: 18,
+            }}
+          >
+            {viewerRecs.recommendations.slice(0, 5).map((rec) => {
+              const filmIdKey = rec.web_film_id || rec.movie_id;
+              const matchedFilm =
+                films.find((f) => f.id === filmIdKey) ||
+                films.find((f) => f.title?.toLowerCase() === rec.title?.toLowerCase()) || {
+                  id: filmIdKey,
+                  title: rec.title,
+                  posterUrl: rec.poster_url,
+                  thumbnail: rec.poster_url,
+                  rating: rec.predicted_rating,
+                  status: rec.status || "Đang chiếu",
+                };
+              return (
+                <div key={rec.movie_id} style={{ display: "flex", flexDirection: "column" }}>
+                  <MovieCard movie={matchedFilm} go={go} />
+                  {rec.genres && (
+                    <div
+                      style={{
+                        fontSize: 12,
+                        color: "var(--ink-600)",
+                        marginTop: 6,
+                        lineHeight: 1.4,
+                      }}
+                    >
+                      Thể loại: <strong>{rec.genres}</strong>
+                    </div>
+                  )}
+                  {(rec.predicted_rating || rec.reason) && (
+                    <div
+                      style={{
+                        fontSize: 12,
+                        color: "var(--brand-700)",
+                        marginTop: 3,
+                        lineHeight: 1.4,
+                        fontWeight: 500,
+                      }}
+                    >
+                      {rec.reason || `Dự đoán SVD: ${rec.predicted_rating}/5 ★`}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {/* Phim đang chiếu (UC01, UC03) */}
       <section className="section container">

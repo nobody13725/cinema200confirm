@@ -109,7 +109,7 @@ export default function App() {
   let page;
   switch (route.name) {
     case "home":
-      page = <Home go={go} goBack={goBack} />;
+      page = <Home go={go} goBack={goBack} user={user} />;
       break;
     case "movies":
       page = <Movies go={go} goBack={goBack} params={route.params} />;
@@ -124,7 +124,7 @@ export default function App() {
       page = <Showtimes go={go} goBack={goBack} params={route.params} user={user} />;
       break;
     case "cinemas":
-      page = <Cinemas go={go} goBack={goBack} />;
+      page = <Cinemas go={go} goBack={goBack} params={route.params} />;
       break;
     case "promotions":
       page = <Promotions go={go} goBack={goBack} params={route.params} />;
@@ -145,7 +145,7 @@ export default function App() {
       page = <ForgotPassword go={go} goBack={goBack} />;
       break;
     case "profile":
-      page = <Profile go={go} goBack={goBack} user={user} onLogout={onLogout} />;
+      page = <Profile go={go} goBack={goBack} user={user} onLogout={onLogout} params={route.params} />;
       break;
     case "admin":
       // Phân quyền chặt chẽ: Chỉ tài khoản Admin mới được truy cập Bảng quản trị
@@ -204,11 +204,11 @@ export default function App() {
           </div>
         );
       } else {
-        page = <AdminLayout go={go} goBack={goBack} onExitAdmin={() => go("home")} user={user} />;
+        page = <AdminLayout go={go} goBack={goBack} onExitAdmin={() => go("home")} user={user} params={route.params} />;
       }
       break;
     default:
-      page = <Home go={go} goBack={goBack} />;
+      page = <Home go={go} goBack={goBack} user={user} />;
   }
 
   return (
@@ -216,7 +216,7 @@ export default function App() {
       {!hideChrome && <Navbar route={route} go={go} user={user} onLogout={onLogout} />}
       <main style={{ flex: 1 }}>{page}</main>
       {!hideChrome && <Footer go={go} />}
-      {!hideChrome && <Chatbot go={go} />}
+      {!hideChrome && <Chatbot go={go} user={user} />}
       {toast && <div className="toast">{toast}</div>}
     </div>
   );

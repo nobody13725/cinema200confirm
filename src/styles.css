@@ -124,6 +124,8 @@ img { display: block; max-width: 100%; }
   padding: 8px 2px;
   border-bottom: 2px solid transparent;
   transition: color .15s;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .nav-links button.active,
 .nav-links button:hover {

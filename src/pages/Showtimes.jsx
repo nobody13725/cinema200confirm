@@ -1,40 +1,40 @@
 import React, { useState, useEffect } from "react";
 import { dbService, subscribeDb } from "../lib/supabaseClient.js";
 import { FALLBACK_POSTER, FALLBACK_CINEMA, handleImageError } from "../utils/imageFallback";
+import { getLocalYMD, normalizeDateToYMD, isPastShowtime } from "../utils/timeUtils.js";
 
-function buildDateStrip() {
+function buildDateStrip(extraDateYMD = "") {
   const days = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
   const out = [];
   const today = new Date();
-  for (let i = 0; i < 7; i++) {
+  for (let i = 0; i < 8; i++) {
     const d = new Date(today);
     d.setDate(today.getDate() + i);
-    const key = d.toISOString().slice(0, 10);
-    const dow = i === 0 ? "Hôm nay" : days[d.getDay()];
+    const key = getLocalYMD(i);
+    const dow = i === 0 ? "Hôm nay" : i === 1 ? "Ngày mai" : days[d.getDay()];
     const dm = `${d.getDate()}/${d.getMonth() + 1}`;
     out.push({ key, dow, dm });
+  }
+  if (extraDateYMD && !out.some((item) => item.key === extraDateYMD)) {
+    const parts = extraDateYMD.split("-");
+    if (parts.length === 3) {
+      const parsed = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+      const dow = Number.isNaN(parsed.getTime()) ? "Ngày chọn" : days[parsed.getDay()];
+      out.push({ key: extraDateYMD, dow, dm: `${Number(parts[2])}/${Number(parts[1])}` });
+    }
   }
   return out;
 }
 
-function isPastShowtime(dateStr, timeStr) {
-  if (!dateStr || !timeStr) return false;
-  const now = new Date();
-  const currentYMD = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-  if (dateStr < currentYMD) return true;
-  if (dateStr > currentYMD) return false;
-  const currentHM = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-  return timeStr <= currentHM;
-}
-
 export default function Showtimes({ go, params, user }) {
-  const dates = buildDateStrip();
-  const [activeDate, setActiveDate] = useState(dates[0].key);
+  const initialDate = normalizeDateToYMD(params?.date) || getLocalYMD(0);
+  const dates = buildDateStrip(initialDate);
+  const [activeDate, setActiveDate] = useState(initialDate);
   const [films, setFilms] = useState([]);
   const [cinemas, setCinemas] = useState([]);
   const [cities, setCities] = useState([]);
   const [showtimes, setShowtimes] = useState([]);
-  const [cityId, setCityId] = useState("");
+  const [cityId, setCityId] = useState(params?.cityId || "");
   const [movieId, setMovieId] = useState(params?.movieId || "");
   const [cinemaId, setCinemaId] = useState(params?.cinemaId || "");
 
@@ -49,6 +49,17 @@ export default function Showtimes({ go, params, user }) {
     loadData();
     return subscribeDb(loadData);
   }, []);
+
+  useEffect(() => {
+    if (!params) return;
+    if (params.date !== undefined) {
+      const norm = normalizeDateToYMD(params.date);
+      if (norm) setActiveDate(norm);
+    }
+    if (params.cityId !== undefined) setCityId(params.cityId || "");
+    if (params.movieId !== undefined) setMovieId(params.movieId || "");
+    if (params.cinemaId !== undefined) setCinemaId(params.cinemaId || "");
+  }, [params?.date, params?.cityId, params?.movieId, params?.cinemaId]);
 
   const filteredCinemas = cinemas.filter((c) => {
     if (cityId && c.cityId !== cityId) return false;
@@ -174,12 +185,14 @@ export default function Showtimes({ go, params, user }) {
 
       {(() => {
         const cinemaWithShowtimes = filteredCinemas.filter((c) =>
-          showtimes.some(
-            (st) =>
+          showtimes.some((st) => {
+            const stYMD = normalizeDateToYMD(st.date);
+            return (
               st.cinemaId === c.id &&
               (!movieId || st.filmId === movieId) &&
-              (!st.date || st.date === activeDate)
-          )
+              (!stYMD || stYMD === activeDate)
+            );
+          })
         );
 
         if (cinemaWithShowtimes.length === 0) {
@@ -210,7 +223,8 @@ export default function Showtimes({ go, params, user }) {
           const cinemaShowtimes = showtimes.filter((st) => {
             if (st.cinemaId !== c.id) return false;
             if (movieId && st.filmId !== movieId) return false;
-            if (st.date && st.date !== activeDate) return false;
+            const stYMD = normalizeDateToYMD(st.date);
+            if (stYMD && stYMD !== activeDate) return false;
             return true;
           });
 

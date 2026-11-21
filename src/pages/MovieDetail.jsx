@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { dbService, subscribeDb } from "../lib/supabaseClient.js";
+import { dbService, subscribeDb, cfService } from "../lib/supabaseClient.js";
+import MovieCard from "../components/MovieCard.jsx";
 import { FALLBACK_POSTER, FALLBACK_BACKDROP, handleImageError } from "../utils/imageFallback";
 
 function buildDateStrip() {
@@ -39,6 +40,12 @@ export default function MovieDetail({ go, goBack, params, user }) {
   const [reportModal, setReportModal] = useState(null);
   const [reportReason, setReportReason] = useState("Ngôn từ xúc phạm, thiếu văn hóa");
   const [showTrailerModal, setShowTrailerModal] = useState(false);
+  const [allFilms, setAllFilms] = useState([]);
+  const [viewerRecs, setViewerRecs] = useState(null);
+  const [hasWatchedThisFilm, setHasWatchedThisFilm] = useState(false);
+  const [pendingTicket, setPendingTicket] = useState(null);
+  const [commentError, setCommentError] = useState("");
+  const [verifiedReviewerNames, setVerifiedReviewerNames] = useState(new Set());
 
   const dates = buildDateStrip();
   // TC_DTL_03: Lịch chiếu mặc định theo ngày hiện tại
@@ -46,6 +53,7 @@ export default function MovieDetail({ go, goBack, params, user }) {
 
   const loadData = () => {
     const films = dbService.getFilms();
+    setAllFilms(films);
     const found = films.find((f) => f.id === params?.id) || films[0];
     setFilm(found);
     setCinemas(dbService.getCinemas());
@@ -53,31 +61,84 @@ export default function MovieDetail({ go, goBack, params, user }) {
     if (found) {
       const allComments = dbService.getComments();
       setComments(allComments.filter((c) => c.filmId === found.id));
+
+      const watched = Boolean(user && dbService.hasUserWatchedFilm(user, found.id));
+      setHasWatchedThisFilm(watched);
+      setPendingTicket(user ? dbService.getUserPendingOrderForFilm(user, found.id) : null);
+      if (params?.openReview && watched) {
+        setShowCommentForm(true);
+      }
+
+      const verifiedSet = new Set();
+      (dbService.getOrders() || []).forEach((o) => {
+        if (o.filmId === found.id && (o.orderStatus === "confirmed" || o.orderStatus === "used")) {
+          if (o.userId) verifiedSet.add(String(o.userId));
+          if (o.userName) verifiedSet.add(o.userName.trim().toLowerCase());
+        }
+      });
+      setVerifiedReviewerNames(verifiedSet);
     }
+    Promise.allSettled([
+      cfService.getRecommendationsByUser(user?.id || "guest", 6),
+      cfService.getViewerRecommendations(user, 6),
+    ]).then(([aiRes, cfgRes]) => {
+      const aiData = aiRes.status === "fulfilled" ? aiRes.value : null;
+      const cfgData = cfgRes.status === "fulfilled" ? cfgRes.value : null;
+      if (aiData && Array.isArray(aiData.recommendations)) {
+        setViewerRecs({
+          enabled: cfgData ? cfgData.enabled !== false : true,
+          watched_movies: cfgData?.watched_movies || [],
+          recommendations: aiData.recommendations,
+        });
+      } else if (cfgData) {
+        setViewerRecs(cfgData);
+      }
+    });
   };
 
   useEffect(() => {
     loadData();
     return subscribeDb(loadData);
-  }, [params?.id]);
+  }, [params?.id, params?.openReview, user?.id, user?.email]);
 
   if (!film) return null;
 
+  const isWatched =
+    hasWatchedThisFilm ||
+    Boolean(
+      user &&
+        (viewerRecs?.watched_movies || []).some(
+          (w) => w.web_film_id === film.id || w.title?.toLowerCase() === film.title?.toLowerCase()
+        )
+    );
+
   const handlePostComment = (e) => {
     e.preventDefault();
+    setCommentError("");
+    if (!user) {
+      return go("login", { redirect: "movie", redirectParams: { id: film.id } });
+    }
+    if (!hasWatchedThisFilm) {
+      return setCommentError(
+        "Chỉ khán giả đã xem phim (vé đã được nhân viên duyệt hoặc check-in) mới có thể gửi đánh giá!"
+      );
+    }
     if (!commentContent.trim()) return;
 
-    dbService.addComment({
-      userId: user?.id || `usr-${Date.now()}`,
-      userName: user?.fullName || user?.name || "Khán giả Movix",
-      filmId: film.id,
-      filmTitle: film.title,
-      rate: Number(userRating),
-      content: commentContent.trim(),
-    });
-
-    setCommentContent("");
-    setShowCommentForm(false);
+    try {
+      dbService.addComment({
+        userId: user.id,
+        userName: user.fullName || user.name || "Khán giả Movix",
+        filmId: film.id,
+        filmTitle: film.title,
+        rate: Number(userRating),
+        content: commentContent.trim(),
+      });
+      setCommentContent("");
+      setShowCommentForm(false);
+    } catch (err) {
+      setCommentError(err?.message || "Không thể gửi đánh giá.");
+    }
   };
 
   const handleReportComment = (e) => {
@@ -243,7 +304,7 @@ export default function MovieDetail({ go, goBack, params, user }) {
             </div>
           )}
 
-          <div style={{ display: "flex", gap: 12, marginTop: 22, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: 12, marginTop: 22, flexWrap: "wrap", alignItems: "center" }}>
             <button
               className="btn btn-primary"
               onClick={() => {
@@ -266,6 +327,41 @@ export default function MovieDetail({ go, goBack, params, user }) {
             >
               ▶ Xem trailer
             </button>
+            {hasWatchedThisFilm ? (
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  padding: "8px 14px",
+                  borderRadius: 8,
+                  background: "rgba(34, 197, 94, 0.25)",
+                  color: "#bbf7d0",
+                  border: "1px solid rgba(74, 222, 128, 0.6)",
+                  fontSize: 13,
+                  fontWeight: 700,
+                }}
+              >
+                ✓ Đã xem phim · Đủ điều kiện đánh giá
+              </span>
+            ) : pendingTicket ? (
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  padding: "8px 14px",
+                  borderRadius: 8,
+                  background: "rgba(245, 158, 11, 0.22)",
+                  color: "#fde68a",
+                  border: "1px solid rgba(251, 191, 36, 0.55)",
+                  fontSize: 13,
+                  fontWeight: 600,
+                }}
+              >
+                ⏳ Vé #{pendingTicket.ticketCode} chờ nhân viên duyệt
+              </span>
+            ) : null}
           </div>
         </div>
       </div>
@@ -429,18 +525,74 @@ export default function MovieDetail({ go, goBack, params, user }) {
 
         {/* Box Đánh giá từ khán giả (UC04, Figure 9, UC17) */}
         <div className="card">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, gap: 10 }}>
             <h3 style={{ fontSize: 16 }}>Đánh giá từ khán giả ({comments.length})</h3>
-            <button
-              className="btn btn-sm btn-secondary"
-              onClick={() => setShowCommentForm(!showCommentForm)}
-            >
-              {showCommentForm ? "Hủy" : "✍️ Viết đánh giá"}
-            </button>
+            {hasWatchedThisFilm ? (
+              <button
+                className="btn btn-sm btn-secondary"
+                onClick={() => {
+                  setCommentError("");
+                  setShowCommentForm(!showCommentForm);
+                }}
+              >
+                {showCommentForm ? "Hủy" : "✍️ Viết đánh giá"}
+              </button>
+            ) : (
+              <span className="badge badge-gray" style={{ fontSize: 11.5 }}>
+                🔒 Yêu cầu đã xem phim
+              </span>
+            )}
           </div>
 
-          {/* Form thêm bình luận */}
-          {showCommentForm && (
+          {/* Thông báo điều kiện chỉ người đã xem mới đánh giá được */}
+          {!hasWatchedThisFilm && (
+            <div
+              style={{
+                background: pendingTicket ? "#fffbeb" : "#f8fafc",
+                border: `1px solid ${pendingTicket ? "#fde68a" : "var(--ink-100)"}`,
+                borderRadius: 8,
+                padding: "12px 14px",
+                marginBottom: 14,
+                fontSize: 13,
+                color: pendingTicket ? "#92400e" : "var(--ink-700)",
+                lineHeight: 1.5,
+              }}
+            >
+              {!user ? (
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                  <span>🔒 Chỉ khán giả đã xem phim (vé đã được nhân viên duyệt) mới có thể đánh giá.</span>
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm"
+                    onClick={() => go("login", { redirect: "movie", redirectParams: { id: film.id } })}
+                  >
+                    Đăng nhập ngay
+                  </button>
+                </div>
+              ) : pendingTicket ? (
+                <div>
+                  ⏳ Vé <strong>#{pendingTicket.ticketCode}</strong> của bạn đang chờ nhân viên rạp duyệt. Sau khi nhân viên duyệt vé xong, hệ thống sẽ tính phim là <strong>đã xem</strong> và mở khóa quyền đánh giá cho bạn.
+                </div>
+              ) : (
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                  <span>🎬 Chỉ khán giả đã đặt vé &amp; được nhân viên duyệt xem phim mới có thể viết đánh giá bộ phim này.</span>
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm"
+                    onClick={() => {
+                      const el = document.getElementById("movie-showtimes-section");
+                      if (el) el.scrollIntoView({ behavior: "smooth" });
+                    }}
+                  >
+                    🎟️ Đặt vé ngay
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Form thêm bình luận (Chỉ hiện khi người dùng đã xem phim) */}
+          {showCommentForm && hasWatchedThisFilm && (
             <form
               onSubmit={handlePostComment}
               style={{
@@ -475,7 +627,7 @@ export default function MovieDetail({ go, goBack, params, user }) {
               <textarea
                 required
                 rows={3}
-                placeholder="Chia sẻ cảm nhận của bạn về bộ phim này..."
+                placeholder="Chia sẻ cảm nhận của bạn sau khi xem bộ phim này..."
                 value={commentContent}
                 onChange={(e) => setCommentContent(e.target.value)}
                 style={{
@@ -487,9 +639,15 @@ export default function MovieDetail({ go, goBack, params, user }) {
                 }}
               />
 
+              {commentError && (
+                <div style={{ marginTop: 8, color: "#b91c1c", fontSize: 12.5, fontWeight: 600 }}>
+                  ⚠️ {commentError}
+                </div>
+              )}
+
               <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
                 <button type="submit" className="btn btn-primary btn-sm">
-                  Gửi bình luận
+                  Gửi đánh giá
                 </button>
               </div>
             </form>
@@ -497,51 +655,126 @@ export default function MovieDetail({ go, goBack, params, user }) {
 
           {/* Danh sách bình luận */}
           <div style={{ maxHeight: 360, overflowY: "auto" }}>
-            {comments.map((c) => (
-              <div className="review-row" key={c.id}>
-                <div className="review-head" style={{ justifyContent: "space-between" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <div className="small-avatar" style={{ overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      {c.avatar ? (
-                        <img src={c.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                      ) : (
-                        (c.userName || "U").slice(0, 1).toUpperCase()
-                      )}
-                    </div>
-                    <div>
-                      <div className="review-name">{c.userName || "Khán giả"}</div>
-                      <div className="review-stars">
-                        {"★".repeat(c.rate || 5)}
-                        {"☆".repeat(Math.max(0, 5 - (c.rate || 5)))}
+            {comments.map((c) => {
+              const isVerifiedReviewer =
+                c.verifiedWatch ||
+                (c.userId && verifiedReviewerNames.has(String(c.userId))) ||
+                (c.userName && verifiedReviewerNames.has(c.userName.trim().toLowerCase()));
+              return (
+                <div className="review-row" key={c.id}>
+                  <div className="review-head" style={{ justifyContent: "space-between" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <div className="small-avatar" style={{ overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        {c.avatar ? (
+                          <img src={c.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        ) : (
+                          (c.userName || "U").slice(0, 1).toUpperCase()
+                        )}
+                      </div>
+                      <div>
+                        <div className="review-name" style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                          <span>{c.userName || "Khán giả"}</span>
+                          {isVerifiedReviewer && (
+                            <span
+                              style={{
+                                fontSize: 10.5,
+                                fontWeight: 700,
+                                padding: "1px 7px",
+                                borderRadius: 99,
+                                background: "#ecfdf5",
+                                color: "#047857",
+                                border: "1px solid #a7f3d0",
+                              }}
+                            >
+                              ✓ Đã xem phim
+                            </span>
+                          )}
+                        </div>
+                        <div className="review-stars">
+                          {"★".repeat(c.rate || 5)}
+                          {"☆".repeat(Math.max(0, 5 - (c.rate || 5)))}
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <button
-                    className="btn btn-ghost btn-sm"
-                    style={{ fontSize: 11.5, color: "var(--ink-500)", padding: "2px 8px" }}
-                    onClick={() => setReportModal(c)}
-                    title="Báo cáo bình luận này"
-                  >
-                    🚩 Báo cáo
-                  </button>
-                </div>
-                <p className="review-text">{c.content}</p>
-                {c.report && (
-                  <div style={{ fontSize: 11, color: "var(--red-500)", fontStyle: "italic", marginTop: 4 }}>
-                    ⚠️ Bình luận này đang được ban quản trị xem xét báo cáo.
+                    <button
+                      className="btn btn-ghost btn-sm"
+                      style={{ fontSize: 11.5, color: "var(--ink-500)", padding: "2px 8px" }}
+                      onClick={() => setReportModal(c)}
+                      title="Báo cáo bình luận này"
+                    >
+                      🚩 Báo cáo
+                    </button>
                   </div>
-                )}
-              </div>
-            ))}
+                  <p className="review-text">{c.content}</p>
+                  {c.report && (
+                    <div style={{ fontSize: 11, color: "var(--red-500)", fontStyle: "italic", marginTop: 4 }}>
+                      ⚠️ Bình luận này đang được ban quản trị xem xét báo cáo.
+                    </div>
+                  )}
+                </div>
+              );
+            })}
             {comments.length === 0 && (
               <div style={{ color: "var(--ink-500)", textAlign: "center", padding: 20, fontSize: 13.5 }}>
-                Chưa có đánh giá nào cho phim này. Hãy là người đầu tiên để lại cảm nhận!
+                Chưa có đánh giá nào cho phim này. Hãy xem phim để là người đầu tiên để lại cảm nhận!
               </div>
             )}
           </div>
         </div>
       </div>
+
+      {/* Gợi ý phim tiếp theo từ hệ thống AI */}
+      {(() => {
+        const nextRecs = (viewerRecs?.recommendations || [])
+          .filter((r) => (r.web_film_id || r.movie_id) !== film.id)
+          .slice(0, 5);
+        if (viewerRecs?.enabled === false || nextRecs.length === 0) return null;
+        return (
+          <div style={{ marginTop: 32 }}>
+            <div className="section-head" style={{ flexWrap: "wrap", gap: 10 }}>
+              <div>
+                <h3>Có thể bạn muốn xem tiếp</h3>
+                <p style={{ fontSize: 13.5, color: "var(--ink-500)", marginTop: 2 }}>
+                  {isWatched
+                    ? `Vì bạn đã xem xong ${film.title} · Gợi ý thêm các phim tương tự chưa xem`
+                    : "Đề xuất Top phim phù hợp dựa trên lịch sử đánh giá của bạn"}
+                </p>
+              </div>
+            </div>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(205px, 1fr))",
+                gap: 18,
+              }}
+            >
+              {nextRecs.map((rec) => {
+                const filmIdKey = rec.web_film_id || rec.movie_id;
+                const matchedFilm =
+                  allFilms.find((f) => f.id === filmIdKey) ||
+                  allFilms.find((f) => f.title?.toLowerCase() === rec.title?.toLowerCase());
+                if (!matchedFilm) return null;
+                return (
+                  <div key={rec.movie_id} style={{ display: "flex", flexDirection: "column" }}>
+                    <MovieCard movie={matchedFilm} go={go} />
+                    {rec.genres && (
+                      <div style={{ fontSize: 12, color: "var(--ink-600)", marginTop: 6, lineHeight: 1.4 }}>
+                        Thể loại: <strong>{rec.genres}</strong>
+                      </div>
+                    )}
+                    {rec.reason && (
+                      <div style={{ fontSize: 12, color: "var(--brand-700)", marginTop: 3, lineHeight: 1.4, fontWeight: 500 }}>
+                        {rec.reason}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Modal phát Trailer (TC_DTL_02) */}
       {showTrailerModal && (

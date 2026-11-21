@@ -2,10 +2,10 @@ import React, { useState, useEffect } from "react";
 import { dbService, subscribeDb } from "../lib/supabaseClient.js";
 import { FALLBACK_CINEMA, handleImageError } from "../utils/imageFallback";
 
-export default function Cinemas({ go }) {
+export default function Cinemas({ go, params }) {
   const [cinemas, setCinemas] = useState([]);
   const [cities, setCities] = useState([]);
-  const [selectedCity, setSelectedCity] = useState("all");
+  const [selectedCity, setSelectedCity] = useState(params?.cityId || "all");
 
   const loadData = () => {
     setCinemas(dbService.getCinemas());
@@ -16,6 +16,12 @@ export default function Cinemas({ go }) {
     loadData();
     return subscribeDb(loadData);
   }, []);
+
+  useEffect(() => {
+    if (params?.cityId !== undefined) {
+      setSelectedCity(params.cityId || "all");
+    }
+  }, [params?.cityId]);
 
   const filtered = cinemas.filter(
     (c) => selectedCity === "all" || c.cityId === selectedCity

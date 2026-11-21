@@ -59,6 +59,7 @@ export default function BookingFlow({ go, goBack: appGoBack, params, user }) {
   const [paymentSimMode, setPaymentSimMode] = useState("success"); // 'success' | 'failure' (TC_BK_16, TC_BK_17)
   const [bookingError, setBookingError] = useState("");
   const submittingRef = useRef(false);
+  const autoAppliedBookingRef = useRef("");
 
   // TC_BK_15: Đếm ngược thời gian giữ ghế (5 phút = 300 giây)
   const [holdTimer, setHoldTimer] = useState(300);
@@ -157,6 +158,82 @@ export default function BookingFlow({ go, goBack: appGoBack, params, user }) {
     seatLayout.forEach((r) => r.seats.forEach((s) => (idx[s.id] = s)));
     return idx;
   }, [seatLayout]);
+
+  // Tự động chọn sẵn ghế đúng yêu cầu (loại ghế / tầm giá / số lượng vé) khi được chuyển từ Trợ lý AI
+  useEffect(() => {
+    const reqKey = params?.autoBookKey ? String(params.autoBookKey) : "";
+    if (!reqKey || autoAppliedBookingRef.current === reqKey || seatLayout.length === 0) return;
+
+    const targetType = params?.preferredSeatType || "standard";
+    const desiredCount = Math.max(
+      1,
+      Math.min(MAX_SEATS, Number(params?.ticketCount) || (targetType === "couple" ? 2 : 1))
+    );
+
+    const matchingRows = seatLayout.filter((r) => r.type === targetType);
+    const searchRows = matchingRows.length > 0 ? matchingRows : seatLayout;
+
+    let picked = [];
+    if (targetType === "couple") {
+      const coupleRows = matchingRows.length > 0 ? matchingRows : seatLayout.filter((r) => r.type === "couple");
+      for (const r of coupleRows) {
+        const availPairs = [];
+        for (let i = 0; i < r.seats.length; i += 2) {
+          const s1 = r.seats[i];
+          const s2 = r.seats[i + 1];
+          if (s1 && s2 && !s1.taken && !s2.taken) {
+            availPairs.push([s1.id, s2.id]);
+          }
+        }
+        const pairsNeeded = Math.max(1, Math.ceil(desiredCount / 2));
+        if (availPairs.length >= pairsNeeded) {
+          const startPair = Math.max(0, Math.floor((availPairs.length - pairsNeeded) / 2));
+          picked = availPairs.slice(startPair, startPair + pairsNeeded).flat();
+          break;
+        }
+      }
+    } else {
+      // Ưu tiên hàng giữa của nhóm ghế (vd: F cho VIP, C/D cho Standard)
+      const orderedRows = [...searchRows].sort(
+        (a, b) => Math.abs(searchRows.indexOf(a) - Math.floor(searchRows.length / 2)) - Math.abs(searchRows.indexOf(b) - Math.floor(searchRows.length / 2))
+      );
+      for (const r of orderedRows) {
+        let streak = [];
+        const allStreaks = [];
+        for (const s of r.seats) {
+          if (!s.taken && !s.couple) {
+            streak.push(s.id);
+            if (streak.length === desiredCount) {
+              allStreaks.push([...streak]);
+              streak = streak.slice(1);
+            }
+          } else {
+            streak = [];
+          }
+        }
+        if (allStreaks.length > 0) {
+          picked = allStreaks[Math.floor(allStreaks.length / 2)];
+          break;
+        }
+      }
+      if (picked.length === 0) {
+        const flatAvail = searchRows
+          .flatMap((r) => r.seats)
+          .filter((s) => !s.taken && !s.couple)
+          .slice(0, desiredCount)
+          .map((s) => s.id);
+        picked = flatAvail;
+      }
+    }
+
+    autoAppliedBookingRef.current = reqKey;
+    if (picked.length > 0) {
+      setSelectedSeats(picked);
+    }
+    if (params?.promoCode) {
+      setPromoCode(params.promoCode);
+    }
+  }, [params?.autoBookKey, params?.preferredSeatType, params?.ticketCount, params?.promoCode, seatLayout]);
 
   // BUG_BK_02: Chọn ghế đôi và tính tiền
   function toggleSeat(seat) {
@@ -526,6 +603,27 @@ export default function BookingFlow({ go, goBack: appGoBack, params, user }) {
           {/* Bước 1: Chọn ghế ngồi (UC06, Hình 11) */}
           {step === "seats" && (
             <>
+              {params?.assistantNote && (
+                <div
+                  style={{
+                    marginBottom: 14,
+                    padding: "10px 14px",
+                    borderRadius: 10,
+                    background: "var(--brand-50)",
+                    border: "1px solid var(--brand-200)",
+                    color: "var(--brand-800, #3730a3)",
+                    fontSize: 13,
+                    fontWeight: 600,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                  }}
+                >
+                  <span>✨</span>
+                  <span>Đã chuẩn bị sẵn theo yêu cầu của bạn: {params.assistantNote}</span>
+                </div>
+              )}
+
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
                 <h3 style={{ margin: 0 }}>Chọn ghế ngồi ({room.name || "Phòng chiếu"})</h3>
                 <div style={{ fontSize: 12.5, color: "var(--ink-500)" }}>
