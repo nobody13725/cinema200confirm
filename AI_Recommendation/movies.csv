@@ -1,5 +1,5 @@
 movie_id,title,genres,genres_en,poster_url,status
-film-1,Avatar: The Way of Water,"Khoa học viễn tưởng, Hành động",Sci-Fi|Action,https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=600&q=80,Đang chiếu
+film-1,Avatar: The Way of Water,"Khoa học viễn tưởng, Hành động, Phiêu lưu",Sci-Fi|Action|Adventure,https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=600&q=80,Đang chiếu
 film-2,Dune: Part Two,"Khoa học viễn tưởng, Hành động, Chính kịch & Tâm lý",Sci-Fi|Action|Drama,https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=600&q=80,Đang chiếu
 film-3,Deadpool & Wolverine,"Hành động, Hài hước, Khoa học viễn tưởng",Action|Comedy|Sci-Fi,https://images.unsplash.com/photo-1563089145-599997674d42?auto=format&fit=crop&w=600&q=80,Đang chiếu
 film-4,Spider-Man: Across the Spider-Verse,"Hoạt hình & Anime, Hành động, Khoa học viễn tưởng",Animation|Action|Sci-Fi,https://images.unsplash.com/photo-1635805737707-575885ab0820?auto=format&fit=crop&w=600&q=80,Đang chiếu
@@ -11,3 +11,9 @@ film-9,Godzilla x Kong: The New Empire,"Hành động, Khoa học viễn tưởn
 film-10,Exhuma: Quật Mộ Trùng Ma,"Kinh dị, Bí ẩn, Chính kịch & Tâm lý",Horror|Mystery|Drama,https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=600&q=80,Đang chiếu
 film-11,Detective Conan: The Million-dollar Pentagram,"Hoạt hình & Anime, Hành động, Bí ẩn",Animation|Action|Mystery,https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=600&q=80,Đang chiếu
 film-12,The Wild Robot,"Hoạt hình & Anime, Gia đình, Khoa học viễn tưởng",Animation|Family|Sci-Fi,https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&w=600&q=80,Đang chiếu
+film-13,A Quiet Place: Day One,"Kinh dị, Bí ẩn, Khoa học viễn tưởng, Hành động",Horror|Mystery|Sci-Fi|Action,https://images.unsplash.com/photo-1509248961158-e54f6934749c?auto=format&fit=crop&w=600&q=80,Đang chiếu
+film-14,Kung Fu Panda 4,"Hoạt hình & Anime, Hài hước, Hành động",Animation|Comedy|Action,https://images.unsplash.com/photo-1564349683136-77e08dba1ef7?auto=format&fit=crop&w=600&q=80,Đang chiếu
+film-15,Interstellar (IMAX Re-release),"Khoa học viễn tưởng, Chính kịch & Tâm lý",Sci-Fi|Drama,https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&w=600&q=80,Đang chiếu
+film-16,Ma Da,"Kinh dị, Bí ẩn, Chính kịch & Tâm lý",Horror|Mystery|Drama,https://images.unsplash.com/photo-1505635552518-3448ff116af3?auto=format&fit=crop&w=600&q=80,Đang chiếu
+film-17,Transformers One,"Hoạt hình & Anime, Hành động, Khoa học viễn tưởng",Animation|Action|Sci-Fi,https://images.unsplash.com/photo-1535016120720-40c646be5580?auto=format&fit=crop&w=600&q=80,Đang chiếu
+film-18,Venom: The Last Dance,"Hành động, Khoa học viễn tưởng, Hài hước",Action|Sci-Fi|Comedy,https://images.unsplash.com/photo-1500462918059-b1a0cb512f1d?auto=format&fit=crop&w=600&q=80,Đang chiếu

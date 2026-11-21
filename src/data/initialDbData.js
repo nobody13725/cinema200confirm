@@ -22,6 +22,9 @@ export const INITIAL_CINEMAS = [
     id: "cin-1",
     name: "CGV Vincom Center Bà Triệu",
     address: "191 Bà Triệu, Q. Hai Bà Trưng, Hà Nội",
+    hotline: "1900 6017",
+    amenities: ["IMAX Laser", "Gold Class", "Dolby Atmos", "Bãi đỗ xe"],
+    status: "Hoạt động",
     avatar: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=600&q=80",
     banner: "https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=1200&q=80",
     cityId: "city-2",
@@ -31,6 +34,9 @@ export const INITIAL_CINEMAS = [
     id: "cin-2",
     name: "Lotte Cinema Landmark 72",
     address: "Tầng 5 Keangnam Landmark 72, Nam Từ Liêm, Hà Nội",
+    hotline: "1900 5454 36",
+    amenities: ["Gold Class", "Dolby Atmos", "Sweetbox", "Bãi đỗ xe"],
+    status: "Hoạt động",
     avatar: "https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?auto=format&fit=crop&w=600&q=80",
     banner: "https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=1200&q=80",
     cityId: "city-2",
@@ -40,6 +46,9 @@ export const INITIAL_CINEMAS = [
     id: "cin-3",
     name: "Beta Cinema Quang Trung",
     address: "645 Quang Trung, P.11, Q. Gò Vấp, TP. Hồ Chí Minh",
+    hotline: "1900 638 362",
+    amenities: ["Starium", "Dolby Atmos", "Bãi đỗ xe"],
+    status: "Hoạt động",
     avatar: "https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=600&q=80",
     banner: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=1200&q=80",
     cityId: "city-1",
@@ -49,6 +58,9 @@ export const INITIAL_CINEMAS = [
     id: "cin-4",
     name: "Galaxy Cinema Nguyễn Du",
     address: "116 Nguyễn Du, P. Bến Thành, Quận 1, TP. Hồ Chí Minh",
+    hotline: "1900 2224",
+    amenities: ["IMAX Laser", "Starium", "Dolby Atmos", "Sweetbox"],
+    status: "Hoạt động",
     avatar: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=600&q=80",
     banner: "https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=1200&q=80",
     cityId: "city-1",
@@ -58,6 +70,9 @@ export const INITIAL_CINEMAS = [
     id: "cin-5",
     name: "BHD Star Vincom Thảo Điền",
     address: "Tầng 5 Vincom Mega Mall Thảo Điền, TP. Thủ Đức, TP. Hồ Chí Minh",
+    hotline: "1900 2099",
+    amenities: ["Gold Class", "Dolby Atmos", "Sweetbox", "Bãi đỗ xe"],
+    status: "Hoạt động",
     avatar: "https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?auto=format&fit=crop&w=600&q=80",
     banner: "https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=1200&q=80",
     cityId: "city-1",
@@ -67,6 +82,9 @@ export const INITIAL_CINEMAS = [
     id: "cin-6",
     name: "CGV Vincom Plaza Đà Nẵng",
     address: "Tầng 4 Vincom Plaza, 910A Ngô Quyền, Sơn Trà, Đà Nẵng",
+    hotline: "1900 6017",
+    amenities: ["4DX", "Sweetbox", "Dolby Atmos", "Bãi đỗ xe"],
+    status: "Hoạt động",
     avatar: "https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=600&q=80",
     banner: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=1200&q=80",
     cityId: "city-3",
@@ -76,10 +94,49 @@ export const INITIAL_CINEMAS = [
     id: "cin-7",
     name: "Lotte Cinema Ninh Kiều Cần Thơ",
     address: "Tầng 3 Lotte Mart Cần Thơ, 84 Mậu Thân, An Hòa, Cần Thơ",
+    hotline: "1900 5454 36",
+    amenities: ["Dolby Atmos", "Sweetbox", "Bãi đỗ xe"],
+    status: "Hoạt động",
     avatar: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=600&q=80",
     banner: "https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=1200&q=80",
     cityId: "city-4",
     description: "Rạp chiếu quốc tế lớn nhất Tây Đô với không gian rộng rãi, trang thiết bị nhập khẩu từ Hàn Quốc."
+  },
+  {
+    id: "cin-8",
+    name: "CGV Vincom Plaza Imperia Hải Phòng",
+    address: "Tầng 4 Vincom Plaza Imperia, Khu đô thị Vinhomes Imperia, Hồng Bàng, Hải Phòng",
+    hotline: "1900 6017",
+    amenities: ["Dolby Atmos", "Sweetbox", "Gold Class", "Bãi đỗ xe"],
+    status: "Hoạt động",
+    avatar: "https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?auto=format&fit=crop&w=600&q=80",
+    banner: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=1200&q=80",
+    cityId: "city-5",
+    description: "Cụm rạp hiện đại bậc nhất thành phố Cảng với hệ thống âm thanh vòm Dolby Atmos và ghế đôi Sweetbox."
+  },
+  {
+    id: "cin-9",
+    name: "Beta Cinema Thanh Xuân",
+    address: "Tầng hầm B1 Golden West, Số 2 Lê Văn Thiêm, Thanh Xuân, Hà Nội",
+    hotline: "1900 638 362",
+    amenities: ["Dolby Atmos", "Starium", "Bãi đỗ xe"],
+    status: "Hoạt động",
+    avatar: "https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=600&q=80",
+    banner: "https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=1200&q=80",
+    cityId: "city-2",
+    description: "Điểm hẹn điện ảnh trẻ trung khu vực Thanh Xuân với giá vé HSSV siêu mềm, bắp rang thơm ngon."
+  },
+  {
+    id: "cin-10",
+    name: "Lotte Cinema Hải Châu",
+    address: "Tầng 5 Lotte Mart Đà Nẵng, 06 Nại Nam, Hòa Cường Bắc, Hải Châu, Đà Nẵng",
+    hotline: "1900 5454 36",
+    amenities: ["4DX", "Dolby Atmos", "Bãi đỗ xe"],
+    status: "Hoạt động",
+    avatar: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=600&q=80",
+    banner: "https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?auto=format&fit=crop&w=1200&q=80",
+    cityId: "city-3",
+    description: "Rạp chiếu trung tâm quận Hải Châu với nhiều khung giờ linh hoạt từ sáng sớm tới đêm muộn."
   }
 ];
 
@@ -187,6 +244,106 @@ export const INITIAL_ROOMS = [
     id: "room-7",
     cinemaId: "cin-7",
     name: "Phòng 1 (Standard 2D Laser)",
+    seatLayout: [
+      { row: "A", count: 12 },
+      { row: "B", count: 12 },
+      { row: "C", count: 12 },
+      { row: "D", count: 12 },
+      { row: "E", count: 12 },
+      { row: "F", count: 12, vip: true },
+      { row: "G", count: 12, vip: true }
+    ]
+  },
+  {
+    id: "room-4b",
+    cinemaId: "cin-3",
+    name: "Phòng 2 (Starium 2D)",
+    seatLayout: [
+      { row: "A", count: 12 },
+      { row: "B", count: 12 },
+      { row: "C", count: 12 },
+      { row: "D", count: 12 },
+      { row: "E", count: 12 },
+      { row: "F", count: 12, vip: true },
+      { row: "G", count: 12, vip: true }
+    ]
+  },
+  {
+    id: "room-5b",
+    cinemaId: "cin-4",
+    name: "Phòng 2 (IMAX Laser)",
+    seatLayout: [
+      { row: "A", count: 14 },
+      { row: "B", count: 14 },
+      { row: "C", count: 14 },
+      { row: "D", count: 14 },
+      { row: "E", count: 14 },
+      { row: "F", count: 14 },
+      { row: "G", count: 14, vip: true },
+      { row: "H", count: 14, vip: true }
+    ]
+  },
+  {
+    id: "room-6b",
+    cinemaId: "cin-6",
+    name: "Phòng 2 (Standard 2D)",
+    seatLayout: [
+      { row: "A", count: 12 },
+      { row: "B", count: 12 },
+      { row: "C", count: 12 },
+      { row: "D", count: 12 },
+      { row: "E", count: 12 },
+      { row: "F", count: 12, vip: true },
+      { row: "G", count: 12, vip: true }
+    ]
+  },
+  {
+    id: "room-8",
+    cinemaId: "cin-8",
+    name: "Phòng 1 (Dolby Atmos 2D)",
+    seatLayout: [
+      { row: "A", count: 12 },
+      { row: "B", count: 12 },
+      { row: "C", count: 12 },
+      { row: "D", count: 12 },
+      { row: "E", count: 12 },
+      { row: "F", count: 12 },
+      { row: "G", count: 12, vip: true },
+      { row: "H", count: 12, vip: true }
+    ]
+  },
+  {
+    id: "room-8b",
+    cinemaId: "cin-8",
+    name: "Phòng 2 (Sweetbox & VIP)",
+    seatLayout: [
+      { row: "A", count: 10 },
+      { row: "B", count: 10 },
+      { row: "C", count: 10 },
+      { row: "D", count: 10 },
+      { row: "E", count: 10, vip: true },
+      { row: "F", count: 10, vip: true }
+    ]
+  },
+  {
+    id: "room-9",
+    cinemaId: "cin-9",
+    name: "Phòng 1 (Beta Youth 2D)",
+    seatLayout: [
+      { row: "A", count: 12 },
+      { row: "B", count: 12 },
+      { row: "C", count: 12 },
+      { row: "D", count: 12 },
+      { row: "E", count: 12 },
+      { row: "F", count: 12 },
+      { row: "G", count: 12, vip: true },
+      { row: "H", count: 12, vip: true }
+    ]
+  },
+  {
+    id: "room-10",
+    cinemaId: "cin-10",
+    name: "Phòng 1 (4DX & Dolby)",
     seatLayout: [
       { row: "A", count: 12 },
       { row: "B", count: 12 },
@@ -451,6 +608,132 @@ export const INITIAL_FILMS = [
     subtitles: "Phụ đề Tiếng Việt",
     description: "Tác phẩm hoạt hình cảm động nhất năm của DreamWorks kể về robot Roz bị đắm tàu dạt vào hòn đảo hoang, học cách hòa nhập và nuôi nấng một chú ngỗng non côi cút.",
     status: "Sắp chiếu"
+  },
+  {
+    id: "film-13",
+    title: "A Quiet Place: Day One",
+    otherTitles: ["Vùng Đất Câm Lặng: Ngày Một", "Vùng Đất Câm Lặng"],
+    categoryIds: ["cat-3", "cat-2", "cat-1"],
+    actors: ["Lupita Nyong'o", "Joseph Quinn", "Djimon Hounsou", "Alex Wolff"],
+    directors: ["Michael Sarnoski"],
+    rating: 8.6,
+    releaseDate: "2026-08-28",
+    duration: 99,
+    ageRating: "T16",
+    trailer: "https://www.youtube.com/embed/YPY7J-flzE8",
+    thumbnail: "https://images.unsplash.com/photo-1509248961158-e54f6934749c?auto=format&fit=crop&w=600&q=80",
+    posterUrl: "https://images.unsplash.com/photo-1509248961158-e54f6934749c?auto=format&fit=crop&w=600&q=80",
+    backdropUrl: "https://images.unsplash.com/photo-1478720568477-152d9b164e26?auto=format&fit=crop&w=1200&q=80",
+    format: "2D Digital, IMAX, Dolby Atmos",
+    language: "Tiếng Anh",
+    subtitles: "Phụ đề Tiếng Việt",
+    description: "Phần tiền truyện kịch tính đưa khán giả trở lại ngày đầu tiên thành phố New York rơi vào thảm họa sinh vật ngoài hành tinh săn mồi bằng âm thanh.",
+    status: "Đang chiếu"
+  },
+  {
+    id: "film-14",
+    title: "Kung Fu Panda 4",
+    otherTitles: ["Gấu Trúc Kung Fu 4", "Kung Fu Panda"],
+    categoryIds: ["cat-5", "cat-6", "cat-1"],
+    actors: ["Jack Black", "Awkwafina", "Viola Davis", "Dustin Hoffman"],
+    directors: ["Mike Mitchell"],
+    rating: 8.7,
+    releaseDate: "2026-08-22",
+    duration: 94,
+    ageRating: "P",
+    trailer: "https://www.youtube.com/embed/_inKs4eeHiI",
+    thumbnail: "https://images.unsplash.com/photo-1564349683136-77e08dba1ef7?auto=format&fit=crop&w=600&q=80",
+    posterUrl: "https://images.unsplash.com/photo-1564349683136-77e08dba1ef7?auto=format&fit=crop&w=600&q=80",
+    backdropUrl: "https://images.unsplash.com/photo-1516934024742-b461fba47600?auto=format&fit=crop&w=1200&q=80",
+    format: "2D Lồng tiếng, 2D Phụ đề, 3D",
+    language: "Tiếng Anh / Lồng tiếng Việt",
+    subtitles: "Phụ đề Tiếng Việt",
+    description: "Thần Long Đại Hiệp Po bước vào hành trình mới tìm kiếm người kế vị tại Thung lũng Bình Yên và đối đầu phù thủy tắc kè hoa đầy mưu mô.",
+    status: "Đang chiếu"
+  },
+  {
+    id: "film-15",
+    title: "Interstellar (IMAX Re-release)",
+    otherTitles: ["Hố Đen Tử Thần", "Interstellar"],
+    categoryIds: ["cat-2", "cat-4"],
+    actors: ["Matthew McConaughey", "Anne Hathaway", "Jessica Chastain", "Michael Caine"],
+    directors: ["Christopher Nolan"],
+    rating: 9.5,
+    releaseDate: "2026-08-18",
+    duration: 169,
+    ageRating: "T13",
+    trailer: "https://www.youtube.com/embed/zSWdZVtXT7E",
+    thumbnail: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&w=600&q=80",
+    posterUrl: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&w=600&q=80",
+    backdropUrl: "https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?auto=format&fit=crop&w=1200&q=80",
+    format: "IMAX Laser, 2D Digital",
+    language: "Tiếng Anh",
+    subtitles: "Phụ đề Tiếng Việt",
+    description: "Kiệt tác du hành không gian của đạo diễn Christopher Nolan trở lại màn ảnh rộng IMAX: nhóm phi hành gia vượt qua lỗ sâu vũ trụ tìm hành tinh mới cho nhân loại.",
+    status: "Đang chiếu"
+  },
+  {
+    id: "film-16",
+    title: "Ma Da",
+    otherTitles: ["Ma Da: Truyền Thuyết Sông Nước"],
+    categoryIds: ["cat-3", "cat-4"],
+    actors: ["Việt Hương", "Trung Dân", "Dạ Chúc", "Thành Lộc"],
+    directors: ["Nguyễn Hữu Hoàng"],
+    rating: 8.2,
+    releaseDate: "2026-08-29",
+    duration: 95,
+    ageRating: "T18",
+    trailer: "https://www.youtube.com/embed/yV4J46r93j8",
+    thumbnail: "https://images.unsplash.com/photo-1505635552518-3448ff116af3?auto=format&fit=crop&w=600&q=80",
+    posterUrl: "https://images.unsplash.com/photo-1505635552518-3448ff116af3?auto=format&fit=crop&w=600&q=80",
+    backdropUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
+    format: "2D Digital",
+    language: "Tiếng Việt",
+    subtitles: "Phụ đề Tiếng Anh",
+    description: "Phim kinh dị dân gian miền Tây xoay quanh bà Lệ làm nghề vớt xác trên sông, phải đối mặt lời nguyền Ma Da rùng rợn để cứu đứa con gái bé bỏng.",
+    status: "Đang chiếu"
+  },
+  {
+    id: "film-17",
+    title: "Transformers One",
+    otherTitles: ["Transformers Một", "Nguồn Gốc Cybertron"],
+    categoryIds: ["cat-5", "cat-1", "cat-2"],
+    actors: ["Chris Hemsworth", "Brian Tyree Henry", "Scarlett Johansson", "Keegan-Michael Key"],
+    directors: ["Josh Cooley"],
+    rating: 8.8,
+    releaseDate: "2026-09-27",
+    duration: 104,
+    ageRating: "P",
+    trailer: "https://www.youtube.com/embed/u2NuUWuwNJ4",
+    thumbnail: "https://images.unsplash.com/photo-1535016120720-40c646be5580?auto=format&fit=crop&w=600&q=80",
+    posterUrl: "https://images.unsplash.com/photo-1535016120720-40c646be5580?auto=format&fit=crop&w=600&q=80",
+    backdropUrl: "https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=1200&q=80",
+    format: "2D Lồng tiếng, 3D, IMAX",
+    language: "Tiếng Anh / Lồng tiếng Việt",
+    subtitles: "Phụ đề Tiếng Việt",
+    description: "Câu chuyện chưa từng kể về thời trẻ của Optimus Prime và Megatron khi cả hai vẫn là những người anh em sát cánh trên hành tinh Cybertron.",
+    status: "Sắp chiếu"
+  },
+  {
+    id: "film-18",
+    title: "Venom: The Last Dance",
+    otherTitles: ["Venom 3", "Venom: Kèo Cuối"],
+    categoryIds: ["cat-1", "cat-2", "cat-6"],
+    actors: ["Tom Hardy", "Chiwetel Ejiofor", "Juno Temple", "Rhys Ifans"],
+    directors: ["Kelly Marcel"],
+    rating: 8.4,
+    releaseDate: "2026-10-02",
+    duration: 109,
+    ageRating: "T16",
+    trailer: "https://www.youtube.com/embed/__2bjWbetsA",
+    thumbnail: "https://images.unsplash.com/photo-1500462918059-b1a0cb512f1d?auto=format&fit=crop&w=600&q=80",
+    posterUrl: "https://images.unsplash.com/photo-1500462918059-b1a0cb512f1d?auto=format&fit=crop&w=600&q=80",
+    backdropUrl: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1200&q=80",
+    format: "2D, IMAX 3D, 4DX",
+    language: "Tiếng Anh",
+    subtitles: "Phụ đề Tiếng Việt",
+    description: "Eddie Brock và Venom bước vào cuộc chạy trốn sinh tử cuối cùng khi bị cả lực lượng quân đội lẫn thế lực symbiote hùng mạnh ngoài vũ trụ truy sát.",
+    status: "Sắp chiếu"
   }
 ];
 
@@ -526,6 +809,54 @@ export const INITIAL_USERS = [
     status: "Tạm khóa",
     point: 0,
     tier: "Thành viên"
+  },
+  {
+    id: "usr-4",
+    fullName: "Phạm Hoàng Nam",
+    username: "nampham",
+    email: "nampham@gmail.com",
+    phone: "0912345678",
+    role: "customer",
+    password: "123",
+    status: "active",
+    point: 360,
+    tier: "Thành viên"
+  },
+  {
+    id: "usr-5",
+    fullName: "Đỗ Khánh Linh",
+    username: "linhdo",
+    email: "linhdo@gmail.com",
+    phone: "0977889900",
+    role: "customer",
+    password: "123",
+    status: "active",
+    point: 510,
+    tier: "Thành viên"
+  },
+  {
+    id: "usr-6",
+    fullName: "Vũ Đức Hải",
+    username: "haivu",
+    email: "haivu@gmail.com",
+    phone: "0966554433",
+    role: "customer",
+    password: "123",
+    status: "active",
+    point: 150,
+    tier: "Thành viên"
+  },
+  {
+    id: "usr-staff-02",
+    fullName: "Trần Thị Thu Hà",
+    username: "nhanvien2",
+    email: "thuha@movix.vn",
+    phone: "0922334455",
+    role: "employee",
+    password: "123",
+    status: "active",
+    point: 120,
+    tier: "Nhân viên"
   }
 ];
 
@@ -568,6 +899,30 @@ export const INITIAL_COMBOFOODS = [
     image: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?auto=format&fit=crop&w=600&q=80",
     price: 159000,
     description: "1 Bình nước lưu niệm phiên bản giới hạn khắc laser logo bom tấn + 1 bắp ngọt lớn.",
+    status: "active"
+  },
+  {
+    id: "cb-6",
+    name: "Combo Gia Đình 4 Người (Family Party)",
+    image: "https://images.unsplash.com/photo-1572177191856-3cde618dee1f?auto=format&fit=crop&w=600&q=80",
+    price: 199000,
+    description: "2 xô bắp lớn (Ngọt + Phô mai) + 4 ly nước ngọt cỡ L + 2 gói snack khoai tây giòn tan.",
+    status: "active"
+  },
+  {
+    id: "cb-7",
+    name: "Combo Trà Sữa Trân Châu & Khoai Tây",
+    image: "https://images.unsplash.com/photo-1513456852971-30c0b8199d4d?auto=format&fit=crop&w=600&q=80",
+    price: 95000,
+    description: "1 ly trà sữa trân châu đường đen size L + 1 phần khoai tây chiên lắc rong biển nóng hổi.",
+    status: "active"
+  },
+  {
+    id: "cb-8",
+    name: "Combo Healthy Nước Ép & Bắp Ngọt (M)",
+    image: "https://images.unsplash.com/photo-1512149177596-f817c7ef5d4c?auto=format&fit=crop&w=600&q=80",
+    price: 85000,
+    description: "1 chai nước ép cam tươi nguyên chất không đường + 1 bắp rang bơ ít đường size M.",
     status: "active"
   }
 ];
@@ -1795,6 +2150,652 @@ export const INITIAL_SHOWTIMES = [
     basePrice: 80000,
     seatsBooked: [],
     status: "Đang hoạt động"
+  },
+
+  // =========================================================================
+  // BỔ SUNG LỊCH CHIẾU PHONG PHÚ ĐỦ 5 TỈNH THÀNH & PHIM MỚI (d0 - d7)
+  // =========================================================================
+  // Hôm nay (d0) - Spider-Man đa thành phố, phim mới (film-13..film-16) & rạp Hải Phòng, Thanh Xuân, Hải Châu
+  {
+    id: "st-90",
+    filmId: "film-4",
+    cinemaId: "cin-1",
+    roomId: "room-1",
+    startTime: "13:15",
+    date: d0,
+    basePrice: 95000,
+    seatsBooked: ["C4", "C5", "D7"],
+    status: "Đang hoạt động"
+  },
+  {
+    id: "st-91",
+    filmId: "film-4",
+    cinemaId: "cin-9",
+    roomId: "room-9",
+    startTime: "18:45",
+    date: d0,
+    basePrice: 75000,
+    seatsBooked: ["B4", "B5"],
+    status: "Đang hoạt động"
+  },
+  {
+    id: "st-92",
+    filmId: "film-4",
+    cinemaId: "cin-6",
+    roomId: "room-6b",
+    startTime: "20:00",
+    date: d0,
+    basePrice: 95000,
+    seatsBooked: ["E5", "E6"],
+    status: "Đang hoạt động"
+  },
+  {
+    id: "st-93",
+    filmId: "film-4",
+    cinemaId: "cin-8",
+    roomId: "room-8",
+    startTime: "19:30",
+    date: d0,
+    basePrice: 90000,
+    seatsBooked: ["D4", "D5"],
+    status: "Đang hoạt động"
+  },
+  {
+    id: "st-94",
+    filmId: "film-13",
+    cinemaId: "cin-4",
+    roomId: "room-5b",
+    startTime: "21:30",
+    date: d0,
+    basePrice: 125000,
+    seatsBooked: ["E6", "E7"],
+    status: "Đang hoạt động"
+  },
+  {
+    id: "st-95",
+    filmId: "film-13",
+    cinemaId: "cin-1",
+    roomId: "room-1",
+    startTime: "22:00",
+    date: d0,
+    basePrice: 95000,
+    seatsBooked: ["F4", "F5"],
+    status: "Đang hoạt động"
+  },
+  {
+    id: "st-96",
+    filmId: "film-14",
+    cinemaId: "cin-8",
+    roomId: "room-8",
+    startTime: "10:30",
+    date: d0,
+    basePrice: 80000,
+    seatsBooked: ["C3", "C4"],
+    status: "Đang hoạt động"
+  },
+  {
+    id: "st-97",
+    filmId: "film-14",
+    cinemaId: "cin-3",
+    roomId: "room-4b",
+    startTime: "14:30",
+    date: d0,
+    basePrice: 75000,
+    seatsBooked: ["D3", "D4"],
+    status: "Đang hoạt động"
+  },
+  {
+    id: "st-98",
+    filmId: "film-14",
+    cinemaId: "cin-9",
+    roomId: "room-9",
+    startTime: "16:15",
+    date: d0,
+    basePrice: 75000,
+    seatsBooked: ["E4", "E5"],
+    status: "Đang hoạt động"
+  },
+  {
+    id: "st-99",
+    filmId: "film-15",
+    cinemaId: "cin-1",
+    roomId: "room-2",
+    startTime: "22:15",
+    date: d0,
+    basePrice: 140000,
+    seatsBooked: ["G7", "G8", "H7"],
+    status: "Đang hoạt động"
+  },
+  {
+    id: "st-100",
+    filmId: "film-15",
+    cinemaId: "cin-4",
+    roomId: "room-5b",
+    startTime: "19:15",
+    date: d0,
+    basePrice: 135000,
+    seatsBooked: ["F5", "F6"],
+    status: "Đang hoạt động"
+  },
+  {
+    id: "st-101",
+    filmId: "film-16",
+    cinemaId: "cin-8",
+    roomId: "room-8b",
+    startTime: "21:15",
+    date: d0,
+    basePrice: 95000,
+    seatsBooked: ["C2", "C3"],
+    status: "Đang hoạt động"
+  },
+  {
+    id: "st-102",
+    filmId: "film-16",
+    cinemaId: "cin-10",
+    roomId: "room-10",
+    startTime: "20:45",
+    date: d0,
+    basePrice: 90000,
+    seatsBooked: ["D5", "D6"],
+    status: "Đang hoạt động"
+  },
+  {
+    id: "st-103",
+    filmId: "film-2",
+    cinemaId: "cin-8",
+    roomId: "room-8",
+    startTime: "17:00",
+    date: d0,
+    basePrice: 95000,
+    seatsBooked: ["E3", "E4"],
+    status: "Đang hoạt động"
+  },
+  {
+    id: "st-104",
+    filmId: "film-5",
+    cinemaId: "cin-10",
+    roomId: "room-10",
+    startTime: "18:15",
+    date: d0,
+    basePrice: 85000,
+    seatsBooked: ["B6", "B7"],
+    status: "Đang hoạt động"
+  },
+
+  // Ngày mai (d1)
+  {
+    id: "st-105",
+    filmId: "film-4",
+    cinemaId: "cin-1",
+    roomId: "room-1",
+    startTime: "15:00",
+    date: d1,
+    basePrice: 95000,
+    seatsBooked: ["D4", "D5"],
+    status: "Đang hoạt động"
+  },
+  {
+    id: "st-106",
+    filmId: "film-4",
+    cinemaId: "cin-9",
+    roomId: "room-9",
+    startTime: "19:15",
+    date: d1,
+    basePrice: 75000,
+    seatsBooked: [],
+    status: "Đang hoạt động"
+  },
+  {
+    id: "st-107",
+    filmId: "film-13",
+    cinemaId: "cin-2",
+    roomId: "room-3",
+    startTime: "20:00",
+    date: d1,
+    basePrice: 120000,
+    seatsBooked: ["C2", "C3"],
+    status: "Đang hoạt động"
+  },
+  {
+    id: "st-108",
+    filmId: "film-14",
+    cinemaId: "cin-8",
+    roomId: "room-8",
+    startTime: "09:45",
+    date: d1,
+    basePrice: 80000,
+    seatsBooked: ["B4", "B5"],
+    status: "Đang hoạt động"
+  },
+  {
+    id: "st-109",
+    filmId: "film-15",
+    cinemaId: "cin-4",
+    roomId: "room-5b",
+    startTime: "16:30",
+    date: d1,
+    basePrice: 135000,
+    seatsBooked: ["G5", "G6"],
+    status: "Đang hoạt động"
+  },
+  {
+    id: "st-110",
+    filmId: "film-16",
+    cinemaId: "cin-3",
+    roomId: "room-4b",
+    startTime: "21:45",
+    date: d1,
+    basePrice: 80000,
+    seatsBooked: ["E6", "E7"],
+    status: "Đang hoạt động"
+  },
+  {
+    id: "st-111",
+    filmId: "film-7",
+    cinemaId: "cin-10",
+    roomId: "room-10",
+    startTime: "19:30",
+    date: d1,
+    basePrice: 100000,
+    seatsBooked: [],
+    status: "Đang hoạt động"
+  },
+  {
+    id: "st-112",
+    filmId: "film-1",
+    cinemaId: "cin-8",
+    roomId: "room-8b",
+    startTime: "18:30",
+    date: d1,
+    basePrice: 110000,
+    seatsBooked: [],
+    status: "Đang hoạt động"
+  },
+
+  // Ngày kia (d2)
+  {
+    id: "st-113",
+    filmId: "film-13",
+    cinemaId: "cin-5",
+    roomId: "room-5a",
+    startTime: "21:00",
+    date: d2,
+    basePrice: 120000,
+    seatsBooked: [],
+    status: "Đang hoạt động"
+  },
+  {
+    id: "st-114",
+    filmId: "film-14",
+    cinemaId: "cin-9",
+    roomId: "room-9",
+    startTime: "10:15",
+    date: d2,
+    basePrice: 75000,
+    seatsBooked: [],
+    status: "Đang hoạt động"
+  },
+  {
+    id: "st-115",
+    filmId: "film-15",
+    cinemaId: "cin-1",
+    roomId: "room-2",
+    startTime: "19:45",
+    date: d2,
+    basePrice: 140000,
+    seatsBooked: [],
+    status: "Đang hoạt động"
+  },
+  {
+    id: "st-116",
+    filmId: "film-16",
+    cinemaId: "cin-8",
+    roomId: "room-8",
+    startTime: "21:30",
+    date: d2,
+    basePrice: 90000,
+    seatsBooked: ["D4", "D5"],
+    status: "Đang hoạt động"
+  },
+  {
+    id: "st-117",
+    filmId: "film-4",
+    cinemaId: "cin-10",
+    roomId: "room-10",
+    startTime: "15:15",
+    date: d2,
+    basePrice: 90000,
+    seatsBooked: [],
+    status: "Đang hoạt động"
+  },
+  {
+    id: "st-118",
+    filmId: "film-2",
+    cinemaId: "cin-8",
+    roomId: "room-8b",
+    startTime: "19:00",
+    date: d2,
+    basePrice: 110000,
+    seatsBooked: [],
+    status: "Đang hoạt động"
+  },
+
+  // d3
+  {
+    id: "st-119",
+    filmId: "film-13",
+    cinemaId: "cin-9",
+    roomId: "room-9",
+    startTime: "21:15",
+    date: d3,
+    basePrice: 80000,
+    seatsBooked: [],
+    status: "Đang hoạt động"
+  },
+  {
+    id: "st-120",
+    filmId: "film-14",
+    cinemaId: "cin-6",
+    roomId: "room-6b",
+    startTime: "13:45",
+    date: d3,
+    basePrice: 85000,
+    seatsBooked: [],
+    status: "Đang hoạt động"
+  },
+  {
+    id: "st-121",
+    filmId: "film-15",
+    cinemaId: "cin-4",
+    roomId: "room-5b",
+    startTime: "20:00",
+    date: d3,
+    basePrice: 135000,
+    seatsBooked: [],
+    status: "Đang hoạt động"
+  },
+  {
+    id: "st-122",
+    filmId: "film-16",
+    cinemaId: "cin-7",
+    roomId: "room-7",
+    startTime: "21:30",
+    date: d3,
+    basePrice: 80000,
+    seatsBooked: [],
+    status: "Đang hoạt động"
+  },
+  {
+    id: "st-123",
+    filmId: "film-4",
+    cinemaId: "cin-8",
+    roomId: "room-8",
+    startTime: "16:30",
+    date: d3,
+    basePrice: 85000,
+    seatsBooked: [],
+    status: "Đang hoạt động"
+  },
+
+  // d4
+  {
+    id: "st-124",
+    filmId: "film-13",
+    cinemaId: "cin-8",
+    roomId: "room-8",
+    startTime: "20:30",
+    date: d4,
+    basePrice: 95000,
+    seatsBooked: [],
+    status: "Đang hoạt động"
+  },
+  {
+    id: "st-125",
+    filmId: "film-14",
+    cinemaId: "cin-10",
+    roomId: "room-10",
+    startTime: "14:00",
+    date: d4,
+    basePrice: 85000,
+    seatsBooked: [],
+    status: "Đang hoạt động"
+  },
+  {
+    id: "st-126",
+    filmId: "film-15",
+    cinemaId: "cin-1",
+    roomId: "room-2",
+    startTime: "19:30",
+    date: d4,
+    basePrice: 140000,
+    seatsBooked: [],
+    status: "Đang hoạt động"
+  },
+  {
+    id: "st-127",
+    filmId: "film-16",
+    cinemaId: "cin-4",
+    roomId: "room-5",
+    startTime: "21:45",
+    date: d4,
+    basePrice: 95000,
+    seatsBooked: [],
+    status: "Đang hoạt động"
+  },
+  {
+    id: "st-128",
+    filmId: "film-17",
+    cinemaId: "cin-3",
+    roomId: "room-4b",
+    startTime: "17:30",
+    date: d4,
+    basePrice: 80000,
+    seatsBooked: [],
+    status: "Đang hoạt động"
+  },
+
+  // d5 (Cuối tuần)
+  {
+    id: "st-129",
+    filmId: "film-4",
+    cinemaId: "cin-9",
+    roomId: "room-9",
+    startTime: "11:15",
+    date: d5,
+    basePrice: 80000,
+    seatsBooked: [],
+    status: "Đang hoạt động"
+  },
+  {
+    id: "st-130",
+    filmId: "film-13",
+    cinemaId: "cin-1",
+    roomId: "room-1",
+    startTime: "21:45",
+    date: d5,
+    basePrice: 100000,
+    seatsBooked: [],
+    status: "Đang hoạt động"
+  },
+  {
+    id: "st-131",
+    filmId: "film-14",
+    cinemaId: "cin-8",
+    roomId: "room-8",
+    startTime: "10:00",
+    date: d5,
+    basePrice: 85000,
+    seatsBooked: [],
+    status: "Đang hoạt động"
+  },
+  {
+    id: "st-132",
+    filmId: "film-15",
+    cinemaId: "cin-4",
+    roomId: "room-5b",
+    startTime: "19:00",
+    date: d5,
+    basePrice: 145000,
+    seatsBooked: ["F6", "F7"],
+    status: "Đang hoạt động"
+  },
+  {
+    id: "st-133",
+    filmId: "film-16",
+    cinemaId: "cin-10",
+    roomId: "room-10",
+    startTime: "21:30",
+    date: d5,
+    basePrice: 95000,
+    seatsBooked: [],
+    status: "Đang hoạt động"
+  },
+  {
+    id: "st-134",
+    filmId: "film-18",
+    cinemaId: "cin-2",
+    roomId: "room-3",
+    startTime: "20:15",
+    date: d5,
+    basePrice: 130000,
+    seatsBooked: [],
+    status: "Đang hoạt động"
+  },
+
+  // d6 (Cuối tuần)
+  {
+    id: "st-135",
+    filmId: "film-4",
+    cinemaId: "cin-8",
+    roomId: "room-8",
+    startTime: "14:30",
+    date: d6,
+    basePrice: 90000,
+    seatsBooked: [],
+    status: "Đang hoạt động"
+  },
+  {
+    id: "st-136",
+    filmId: "film-13",
+    cinemaId: "cin-4",
+    roomId: "room-5",
+    startTime: "21:30",
+    date: d6,
+    basePrice: 100000,
+    seatsBooked: [],
+    status: "Đang hoạt động"
+  },
+  {
+    id: "st-137",
+    filmId: "film-14",
+    cinemaId: "cin-9",
+    roomId: "room-9",
+    startTime: "09:30",
+    date: d6,
+    basePrice: 80000,
+    seatsBooked: [],
+    status: "Đang hoạt động"
+  },
+  {
+    id: "st-138",
+    filmId: "film-15",
+    cinemaId: "cin-1",
+    roomId: "room-2",
+    startTime: "16:30",
+    date: d6,
+    basePrice: 145000,
+    seatsBooked: [],
+    status: "Đang hoạt động"
+  },
+  {
+    id: "st-139",
+    filmId: "film-16",
+    cinemaId: "cin-3",
+    roomId: "room-4b",
+    startTime: "22:00",
+    date: d6,
+    basePrice: 85000,
+    seatsBooked: [],
+    status: "Đang hoạt động"
+  },
+  {
+    id: "st-140",
+    filmId: "film-17",
+    cinemaId: "cin-10",
+    roomId: "room-10",
+    startTime: "15:45",
+    date: d6,
+    basePrice: 90000,
+    seatsBooked: [],
+    status: "Đang hoạt động"
+  },
+
+  // d7
+  {
+    id: "st-141",
+    filmId: "film-4",
+    cinemaId: "cin-1",
+    roomId: "room-1",
+    startTime: "13:30",
+    date: d7,
+    basePrice: 95000,
+    seatsBooked: [],
+    status: "Đang hoạt động"
+  },
+  {
+    id: "st-142",
+    filmId: "film-13",
+    cinemaId: "cin-8",
+    roomId: "room-8b",
+    startTime: "20:30",
+    date: d7,
+    basePrice: 105000,
+    seatsBooked: [],
+    status: "Đang hoạt động"
+  },
+  {
+    id: "st-143",
+    filmId: "film-14",
+    cinemaId: "cin-3",
+    roomId: "room-4b",
+    startTime: "11:00",
+    date: d7,
+    basePrice: 75000,
+    seatsBooked: [],
+    status: "Đang hoạt động"
+  },
+  {
+    id: "st-144",
+    filmId: "film-15",
+    cinemaId: "cin-4",
+    roomId: "room-5b",
+    startTime: "19:30",
+    date: d7,
+    basePrice: 135000,
+    seatsBooked: [],
+    status: "Đang hoạt động"
+  },
+  {
+    id: "st-145",
+    filmId: "film-16",
+    cinemaId: "cin-9",
+    roomId: "room-9",
+    startTime: "21:15",
+    date: d7,
+    basePrice: 80000,
+    seatsBooked: [],
+    status: "Đang hoạt động"
+  },
+  {
+    id: "st-146",
+    filmId: "film-18",
+    cinemaId: "cin-10",
+    roomId: "room-10",
+    startTime: "19:00",
+    date: d7,
+    basePrice: 95000,
+    seatsBooked: [],
+    status: "Đang hoạt động"
   }
 ];
 
@@ -1868,6 +2869,132 @@ export const INITIAL_COMMENTS = [
     reportedBy: "mod_inspector",
     reportReason: "Bình luận thử nghiệm tính năng kiểm duyệt bình luận (UC18).",
     createdAt: "2026-09-03T11:45:00Z"
+  },
+  {
+    id: "cm-6",
+    userId: "usr-4",
+    userName: "Phạm Hoàng Nam",
+    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80",
+    filmId: "film-7",
+    filmTitle: "Oppenheimer",
+    rate: 5,
+    content: "Một tác phẩm lịch sử tiểu sử đầy ám ảnh và căng thẳng đến nghẹt thở. Cillian Murphy quá xứng đáng tượng vàng Oscar.",
+    report: false,
+    reportedBy: null,
+    reportReason: null,
+    createdAt: getRecentTimestamp(-3, 21, 10)
+  },
+  {
+    id: "cm-7",
+    userId: "usr-5",
+    userName: "Đỗ Khánh Linh",
+    avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=150&q=80",
+    filmId: "film-6",
+    filmTitle: "Mai (Trấn Thành)",
+    rate: 5,
+    content: "Diễn xuất tinh tế của Phương Anh Đào khiến mình rưng rưng suốt nửa cuối phim. Góc quay và ánh sáng cực kỳ điện ảnh.",
+    report: false,
+    reportedBy: null,
+    reportReason: null,
+    createdAt: getRecentTimestamp(-2, 22, 0)
+  },
+  {
+    id: "cm-8",
+    userId: "usr-5",
+    userName: "Đỗ Khánh Linh",
+    avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=150&q=80",
+    filmId: "film-13",
+    filmTitle: "A Quiet Place: Day One",
+    rate: 4,
+    content: "Không khí ngột ngạt từng giây, cả rạp im phăng phắc không dám thở mạnh luôn. Xem rạp Dolby Atmos cực phê!",
+    report: false,
+    reportedBy: null,
+    reportReason: null,
+    createdAt: getRecentTimestamp(-1, 20, 45)
+  },
+  {
+    id: "cm-9",
+    userId: "usr-6",
+    userName: "Vũ Đức Hải",
+    avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80",
+    filmId: "film-14",
+    filmTitle: "Kung Fu Panda 4",
+    rate: 5,
+    content: "Hài hước, duyên dáng từ đầu đến cuối, cả nhà mình đi xem ai cũng cười nghiêng ngả. Bản lồng tiếng rất tự nhiên.",
+    report: false,
+    reportedBy: null,
+    reportReason: null,
+    createdAt: getRecentTimestamp(-1, 15, 20)
+  },
+  {
+    id: "cm-10",
+    userId: "usr-1",
+    userName: "Nguyễn Toàn Thắng",
+    avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80",
+    filmId: "film-15",
+    filmTitle: "Interstellar (IMAX Re-release)",
+    rate: 5,
+    content: "Xem lại Interstellar trên màn hình IMAX Laser thực sự nổi da gà ở phân cảnh cập bến tàu quay và hành tinh sóng thần!",
+    report: false,
+    reportedBy: null,
+    reportReason: null,
+    createdAt: getRecentTimestamp(-2, 23, 15)
+  },
+  {
+    id: "cm-11",
+    userId: "usr-4",
+    userName: "Phạm Hoàng Nam",
+    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80",
+    filmId: "film-15",
+    filmTitle: "Interstellar (IMAX Re-release)",
+    rate: 5,
+    content: "Âm nhạc No Time For Caution của Hans Zimmer vang lên trong phòng IMAX xứng đáng 10/10.",
+    report: false,
+    reportedBy: null,
+    reportReason: null,
+    createdAt: getRecentTimestamp(-1, 19, 30)
+  },
+  {
+    id: "cm-12",
+    userId: "usr-6",
+    userName: "Vũ Đức Hải",
+    avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80",
+    filmId: "film-16",
+    filmTitle: "Ma Da",
+    rate: 4,
+    content: "Bối cảnh sông nước miền Tây ma mị chân thật, cô Việt Hương nhập vai cực kỳ xúc động.",
+    report: false,
+    reportedBy: null,
+    reportReason: null,
+    createdAt: getRecentTimestamp(-1, 22, 10)
+  },
+  {
+    id: "cm-13",
+    userId: "usr-2",
+    userName: "Lê Phương Thảo",
+    avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80",
+    filmId: "film-8",
+    filmTitle: "Inside Out 2",
+    rate: 5,
+    content: "Nhân vật Lo Âu cực kỳ đồng cảm với người trẻ hiện đại. Hoạt hình Pixar chưa bao giờ làm mình thất vọng!",
+    report: false,
+    reportedBy: null,
+    reportReason: null,
+    createdAt: getRecentTimestamp(-1, 14, 50)
+  },
+  {
+    id: "cm-14",
+    userId: "usr-3",
+    userName: "Trần Minh Anh",
+    avatar: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=150&q=80",
+    filmId: "film-12",
+    filmTitle: "The Wild Robot",
+    rate: 5,
+    content: "Tác phẩm hoạt hình ấm áp nhất năm, âm nhạc và hình ảnh đẹp như một bức tranh sơn dầu.",
+    report: false,
+    reportedBy: null,
+    reportReason: null,
+    createdAt: getRecentTimestamp(0, 8, 40)
   }
 ];
 
@@ -2033,5 +3160,234 @@ export const INITIAL_ORDERS = [
     paymentStatus: "paid",
     orderStatus: "confirmed",
     createdAt: getRecentTimestamp(0, 10, 15)
+  },
+  {
+    id: "ord-6",
+    ticketCode: "MVX-55102",
+    userId: "usr-4",
+    userName: "Phạm Hoàng Nam",
+    phone: "0912345678",
+    filmId: "film-7",
+    filmTitle: "Oppenheimer",
+    posterUrl: "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&w=600&q=80",
+    cinemaId: "cin-9",
+    cinemaName: "Beta Cinema Thanh Xuân",
+    roomName: "Phòng 1 (Beta Youth 2D)",
+    city: "Hà Nội",
+    showtimeDate: getTodayStr(-2),
+    showtimeTime: "19:30",
+    seats: [
+      { seatKey: "E5", type: "standard", unitPrice: 80000 },
+      { seatKey: "E6", type: "standard", unitPrice: 80000 }
+    ],
+    comboFoods: [
+      { comboId: "cb-1", name: "Combo Solo Bắp Bơ (L) + 1 Coca", quantity: 1, price: 79000 }
+    ],
+    seatSubtotal: 160000,
+    comboSubtotal: 79000,
+    promotionCode: "HSSV20",
+    discountAmount: 32000,
+    totalAmount: 207000,
+    ticketQrUrl: "https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=MVX-55102",
+    paymentMethod: "VietQR",
+    paymentStatus: "paid",
+    orderStatus: "used",
+    createdAt: getRecentTimestamp(-3, 18, 20)
+  },
+  {
+    id: "ord-7",
+    ticketCode: "MVX-44918",
+    userId: "usr-5",
+    userName: "Đỗ Khánh Linh",
+    phone: "0977889900",
+    filmId: "film-6",
+    filmTitle: "Mai (Trấn Thành)",
+    posterUrl: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=600&q=80",
+    cinemaId: "cin-3",
+    cinemaName: "Beta Cinema Quang Trung",
+    roomName: "Phòng 1 (Standard)",
+    city: "TP. Hồ Chí Minh",
+    showtimeDate: getTodayStr(-1),
+    showtimeTime: "19:00",
+    seats: [
+      { seatKey: "D4", type: "standard", unitPrice: 80000 },
+      { seatKey: "D5", type: "standard", unitPrice: 80000 }
+    ],
+    comboFoods: [
+      { comboId: "cb-7", name: "Combo Trà Sữa Trân Châu & Khoai Tây", quantity: 1, price: 95000 }
+    ],
+    seatSubtotal: 160000,
+    comboSubtotal: 95000,
+    promotionCode: "MOMO15",
+    discountAmount: 15000,
+    totalAmount: 240000,
+    ticketQrUrl: "https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=MVX-44918",
+    paymentMethod: "MoMo",
+    paymentStatus: "paid",
+    orderStatus: "used",
+    createdAt: getRecentTimestamp(-2, 16, 40)
+  },
+  {
+    id: "ord-8",
+    ticketCode: "MVX-33821",
+    userId: "usr-5",
+    userName: "Đỗ Khánh Linh",
+    phone: "0977889900",
+    filmId: "film-13",
+    filmTitle: "A Quiet Place: Day One",
+    posterUrl: "https://images.unsplash.com/photo-1509248961158-e54f6934749c?auto=format&fit=crop&w=600&q=80",
+    cinemaId: "cin-4",
+    cinemaName: "Galaxy Cinema Nguyễn Du",
+    roomName: "Phòng 2 (IMAX Laser)",
+    city: "TP. Hồ Chí Minh",
+    showtimeDate: d0,
+    showtimeTime: "21:30",
+    seats: [
+      { seatKey: "E6", type: "standard", unitPrice: 125000 },
+      { seatKey: "E7", type: "standard", unitPrice: 125000 }
+    ],
+    comboFoods: [
+      { comboId: "cb-2", name: "Combo Đôi Bạn Thân (Couple Box)", quantity: 1, price: 119000 }
+    ],
+    seatSubtotal: 250000,
+    comboSubtotal: 119000,
+    promotionCode: "VIP20",
+    discountAmount: 35000,
+    totalAmount: 334000,
+    ticketQrUrl: "https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=MVX-33821",
+    paymentMethod: "PayOS",
+    paymentStatus: "paid",
+    orderStatus: "confirmed",
+    createdAt: getRecentTimestamp(0, 8, 50)
+  },
+  {
+    id: "ord-9",
+    ticketCode: "MVX-22790",
+    userId: "usr-6",
+    userName: "Vũ Đức Hải",
+    phone: "0966554433",
+    filmId: "film-14",
+    filmTitle: "Kung Fu Panda 4",
+    posterUrl: "https://images.unsplash.com/photo-1564349683136-77e08dba1ef7?auto=format&fit=crop&w=600&q=80",
+    cinemaId: "cin-8",
+    cinemaName: "CGV Vincom Plaza Imperia Hải Phòng",
+    roomName: "Phòng 1 (Dolby Atmos 2D)",
+    city: "Hải Phòng",
+    showtimeDate: d1,
+    showtimeTime: "09:45",
+    seats: [
+      { seatKey: "B4", type: "standard", unitPrice: 80000 },
+      { seatKey: "B5", type: "standard", unitPrice: 80000 },
+      { seatKey: "B6", type: "standard", unitPrice: 80000 }
+    ],
+    comboFoods: [
+      { comboId: "cb-6", name: "Combo Gia Đình 4 Người (Family Party)", quantity: 1, price: 199000 }
+    ],
+    seatSubtotal: 240000,
+    comboSubtotal: 199000,
+    promotionCode: "CHAOMOI",
+    discountAmount: 30000,
+    totalAmount: 409000,
+    ticketQrUrl: "https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=MVX-22790",
+    paymentMethod: "PayOS",
+    paymentStatus: "paid",
+    orderStatus: "confirmed",
+    createdAt: getRecentTimestamp(0, 11, 5)
+  },
+  {
+    id: "ord-10",
+    ticketCode: "MVX-19405",
+    userId: "usr-1",
+    userName: "Nguyễn Toàn Thắng",
+    phone: "0987654321",
+    filmId: "film-15",
+    filmTitle: "Interstellar (IMAX Re-release)",
+    posterUrl: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&w=600&q=80",
+    cinemaId: "cin-1",
+    cinemaName: "CGV Vincom Center Bà Triệu",
+    roomName: "Phòng 2 (IMAX Laser)",
+    city: "Hà Nội",
+    showtimeDate: getTodayStr(-2),
+    showtimeTime: "20:00",
+    seats: [
+      { seatKey: "G7", type: "vip", unitPrice: 140000 },
+      { seatKey: "G8", type: "vip", unitPrice: 140000 }
+    ],
+    comboFoods: [
+      { comboId: "cb-5", name: "Combo Bình Nước Độc Quyền Phim", quantity: 1, price: 159000 }
+    ],
+    seatSubtotal: 280000,
+    comboSubtotal: 159000,
+    promotionCode: "CINEVIP",
+    discountAmount: 30000,
+    totalAmount: 409000,
+    ticketQrUrl: "https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=MVX-19405",
+    paymentMethod: "VietQR",
+    paymentStatus: "paid",
+    orderStatus: "used",
+    createdAt: getRecentTimestamp(-2, 17, 15)
+  },
+  {
+    id: "ord-11",
+    ticketCode: "MVX-60812",
+    userId: "usr-6",
+    userName: "Vũ Đức Hải",
+    phone: "0966554433",
+    filmId: "film-16",
+    filmTitle: "Ma Da",
+    posterUrl: "https://images.unsplash.com/photo-1505635552518-3448ff116af3?auto=format&fit=crop&w=600&q=80",
+    cinemaId: "cin-8",
+    cinemaName: "CGV Vincom Plaza Imperia Hải Phòng",
+    roomName: "Phòng 1 (Dolby Atmos 2D)",
+    city: "Hải Phòng",
+    showtimeDate: d2,
+    showtimeTime: "21:30",
+    seats: [
+      { seatKey: "D4", type: "standard", unitPrice: 90000 },
+      { seatKey: "D5", type: "standard", unitPrice: 90000 }
+    ],
+    comboFoods: [
+      { comboId: "cb-4", name: "Snack Nachos Sốt Phô Mai Nóng", quantity: 1, price: 65000 }
+    ],
+    seatSubtotal: 180000,
+    comboSubtotal: 65000,
+    promotionCode: null,
+    discountAmount: 0,
+    totalAmount: 245000,
+    ticketQrUrl: "https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=MVX-60812",
+    paymentMethod: "Thanh toán tại quầy",
+    paymentStatus: "pending",
+    orderStatus: "pending",
+    createdAt: getRecentTimestamp(0, 12, 10)
+  },
+  {
+    id: "ord-12",
+    ticketCode: "MVX-90531",
+    userId: "usr-4",
+    userName: "Phạm Hoàng Nam",
+    phone: "0912345678",
+    filmId: "film-3",
+    filmTitle: "Deadpool & Wolverine",
+    posterUrl: "https://images.unsplash.com/photo-1563089145-599997674d42?auto=format&fit=crop&w=600&q=80",
+    cinemaId: "cin-2",
+    cinemaName: "Lotte Cinema Landmark 72",
+    roomName: "Phòng 1 (Gold Class VIP)",
+    city: "Hà Nội",
+    showtimeDate: d0,
+    showtimeTime: "18:00",
+    seats: [
+      { seatKey: "C5", type: "standard", unitPrice: 120000 }
+    ],
+    comboFoods: [],
+    seatSubtotal: 120000,
+    comboSubtotal: 0,
+    promotionCode: null,
+    discountAmount: 0,
+    totalAmount: 120000,
+    ticketQrUrl: "https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=MVX-90531",
+    paymentMethod: "PayOS",
+    paymentStatus: "refunded",
+    orderStatus: "cancelled",
+    createdAt: getRecentTimestamp(-1, 10, 0)
   }
 ];

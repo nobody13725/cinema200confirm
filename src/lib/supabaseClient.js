@@ -190,30 +190,65 @@ function initLocalDb() {
         }
       }
 
-      // Bảo đảm lịch chiếu luôn khớp với ngày hiện tại và tuần tới
+      // Helper gộp dữ liệu mẫu mới theo id mà không ghi đè dữ liệu người dùng đã chỉnh/đặt
+      const mergeMissingById = (key, initialArr, enrichExisting) => {
+        if (!Array.isArray(db[key]) || db[key].length === 0) {
+          db[key] = [...initialArr];
+          changed = true;
+          return;
+        }
+        const existingMap = new Map(db[key].map((item, idx) => [item.id, idx]));
+        for (const initItem of initialArr) {
+          const existingIdx = existingMap.get(initItem.id);
+          if (existingIdx === undefined) {
+            db[key].push(initItem);
+            existingMap.set(initItem.id, db[key].length - 1);
+            changed = true;
+          } else if (typeof enrichExisting === "function") {
+            const updated = enrichExisting(db[key][existingIdx], initItem);
+            if (updated) {
+              db[key][existingIdx] = updated;
+              changed = true;
+            }
+          }
+        }
+      };
+
+      mergeMissingById("cities", INITIAL_CITIES);
+      mergeMissingById("categories", INITIAL_CATEGORIES);
+      mergeMissingById("cinemas", INITIAL_CINEMAS, (cur, initC) => {
+        if (!cur.hotline || !Array.isArray(cur.amenities) || !cur.status) {
+          return {
+            ...initC,
+            ...cur,
+            hotline: cur.hotline || initC.hotline,
+            amenities: Array.isArray(cur.amenities) && cur.amenities.length > 0 ? cur.amenities : initC.amenities,
+            status: cur.status || initC.status,
+          };
+        }
+        return null;
+      });
+      mergeMissingById("rooms", INITIAL_ROOMS);
+      mergeMissingById("films", INITIAL_FILMS);
+      mergeMissingById("combofoods", INITIAL_COMBOFOODS);
+      mergeMissingById("comments", INITIAL_COMMENTS);
+
+      // Bảo đảm lịch chiếu luôn khớp với ngày hiện tại và bổ sung các suất mới
       const todayStr = getTodayStr(0);
       const hasTodayShowtimes =
         db.showtimes &&
         Array.isArray(db.showtimes) &&
         db.showtimes.some((st) => st.date === todayStr);
 
-      if (!hasTodayShowtimes || (db.showtimes && db.showtimes.length < INITIAL_SHOWTIMES.length)) {
+      if (!hasTodayShowtimes || !Array.isArray(db.showtimes) || db.showtimes.length === 0) {
         db.showtimes = [...INITIAL_SHOWTIMES];
         changed = true;
+      } else {
+        mergeMissingById("showtimes", INITIAL_SHOWTIMES);
       }
 
-      // Bảo đảm luôn có đơn vé mẫu để Nhân viên/Admin kiểm thử duyệt vé & soát vé
-      if (!db.orders || !Array.isArray(db.orders)) {
-        db.orders = [...INITIAL_ORDERS];
-        changed = true;
-      } else {
-        for (const initOrd of INITIAL_ORDERS) {
-          if ((initOrd.id === "ord-4" || initOrd.id === "ord-5") && !db.orders.some((o) => o.id === initOrd.id)) {
-            db.orders.push(initOrd);
-            changed = true;
-          }
-        }
-      }
+      // Bảo đảm luôn có đầy đủ đơn vé mẫu (confirmed, used, pending, cancelled)
+      mergeMissingById("orders", INITIAL_ORDERS);
 
       if (changed) {
         localStorage.setItem(STORAGE_KEY_DB, JSON.stringify(db));

@@ -64,9 +64,13 @@ UNIFIED_USERS = [
     (3, "usr-3", "minhanh", "123", "Trần Minh Anh", "minhanh@gmail.com", "Gia đình & Tâm lý Việt", "customer"),
     (4, "usr-admin-01", "admin", "123", "Quản trị viên Movix", "admin@movix.vn", "Quản trị viên hệ thống", "admin"),
     (5, "usr-staff-01", "nhanvien", "123", "Nguyễn Văn Nhân Viên", "nhanvien@movix.vn", "Nhân viên vận hành rạp", "employee"),
+    (6, "usr-4", "nampham", "123", "Phạm Hoàng Nam", "nampham@gmail.com", "Chính kịch, Lịch sử & IMAX", "customer"),
+    (7, "usr-5", "linhdo", "123", "Đỗ Khánh Linh", "linhdo@gmail.com", "Tâm lý & Kinh dị sinh tồn", "customer"),
+    (8, "usr-6", "haivu", "123", "Vũ Đức Hải", "haivu@gmail.com", "Gia đình, Hoạt hình & Kinh dị Việt", "customer"),
+    (9, "usr-staff-02", "nhanvien2", "123", "Trần Thị Thu Hà", "thuha@movix.vn", "Nhân viên vận hành rạp", "employee"),
 ]
 
-# Danh sách 12 phim thống nhất 1-1 với Movix Website (INITIAL_FILMS: film-1..film-12)
+# Danh sách 18 phim thống nhất 1-1 với Movix Website (INITIAL_FILMS: film-1..film-18)
 UNIFIED_MOVIES = [
     (1, "film-1", "Avatar: The Way of Water", "Sci-Fi|Action|Adventure", 2026, "ML-Ref #1",
      "Jake Sully và Neytiri cùng các con khám phá các rạn san hô kỳ vĩ trên Pandora và chiến đấu bảo vệ gia đình."),
@@ -92,29 +96,50 @@ UNIFIED_MOVIES = [
      "Cuộc đối đầu kịch tính giữa Siêu đạo chích Kid và Hattori Heiji tại Hakodate xoay quanh báu vật cổ."),
     (12, "film-12", "The Wild Robot", "Animation|Family|Sci-Fi", 2026, "ML-Ref #12",
      "Robot Roz bị đắm tàu dạt vào đảo hoang, học cách hòa nhập thiên nhiên và nuôi nấng chú ngỗng non."),
+    (13, "film-13", "A Quiet Place: Day One", "Horror|Mystery|Sci-Fi|Action", 2026, "ML-Ref #13",
+     "Phần tiền truyện kịch tính về ngày đầu tiên thành phố New York rơi vào thảm họa sinh vật săn mồi theo âm thanh."),
+    (14, "film-14", "Kung Fu Panda 4", "Animation|Comedy|Action", 2026, "ML-Ref #14",
+     "Thần Long Đại Hiệp Po tìm kiếm người kế vị và đối đầu phù thủy tắc kè hoa tại Thung lũng Bình Yên."),
+    (15, "film-15", "Interstellar (IMAX Re-release)", "Sci-Fi|Drama", 2026, "ML-Ref #15",
+     "Kiệt tác du hành không gian của Christopher Nolan trở lại màn ảnh IMAX Laser."),
+    (16, "film-16", "Ma Da", "Horror|Mystery|Drama", 2026, "ML-Ref #16",
+     "Phim kinh dị dân gian miền Tây xoay quanh bà Lệ làm nghề vớt xác đối mặt lời nguyền sông nước."),
+    (17, "film-17", "Transformers One", "Animation|Action|Sci-Fi", 2026, "ML-Ref #17",
+     "Câu chuyện nguồn gốc tình anh em giữa Optimus Prime và Megatron trên hành tinh Cybertron."),
+    (18, "film-18", "Venom: The Last Dance", "Action|Sci-Fi|Comedy", 2026, "ML-Ref #18",
+     "Eddie Brock và Venom bước vào cuộc chạy trốn sinh tử cuối cùng chống lại thế lực symbiote vũ trụ."),
 ]
 
 
 def build_movielens_seed_ratings():
     """
-    Tạo tập đánh giá mẫu MovieLens benchmark (movielens_ratings) gắn với 12 phim hợp nhất:
-    - Các cụm người dùng lịch sử MovieLens (User 101..120) để SVD học tương quan đánh giá & thể loại.
-    - Dữ liệu mẫu ban đầu của User 1..3 khớp với lịch sử/bình luận gốc trên Movix.
+    Tạo tập đánh giá mẫu MovieLens benchmark (movielens_ratings) gắn với 18 phim hợp nhất:
+    - Các cụm người dùng lịch sử MovieLens (User 101..128) để SVD học tương quan đánh giá & thể loại.
+    - Dữ liệu mẫu ban đầu của User 1..3, 6..8 khớp với lịch sử/bình luận gốc trên Movix.
     """
     seeds = []
 
     # Lịch sử đánh giá ban đầu khớp với INITIAL_COMMENTS / INITIAL_ORDERS trên Movix
     seeds.extend([
         (1, 1, 5.0),   # User 1 (Nguyễn Toàn Thắng) đã xem & đánh giá 5 sao Avatar: The Way of Water
+        (1, 15, 5.0),  # User 1 đã xem & đánh giá 5 sao Interstellar IMAX
         (2, 2, 5.0),   # User 2 (Lê Phương Thảo) đã xem & đánh giá 5 sao Dune: Part Two
         (2, 4, 5.0),   # User 2 đã đánh giá 5 sao Spider-Man: Across the Spider-Verse
+        (2, 8, 5.0),   # User 2 đã đánh giá 5 sao Inside Out 2
         (3, 5, 5.0),   # User 3 (Trần Minh Anh) đã xem & đánh giá 5 sao Lật Mặt 7
+        (3, 12, 5.0),  # User 3 đã đánh giá 5 sao The Wild Robot
+        (6, 7, 5.0),   # User 4 (Phạm Hoàng Nam) đã xem & đánh giá 5 sao Oppenheimer
+        (6, 15, 5.0),  # User 4 đã đánh giá 5 sao Interstellar IMAX
+        (7, 6, 5.0),   # User 5 (Đỗ Khánh Linh) đã xem & đánh giá 5 sao Mai
+        (7, 13, 4.0),  # User 5 đã đánh giá 4 sao A Quiet Place: Day One
+        (8, 14, 5.0),  # User 6 (Vũ Đức Hải) đã đánh giá 5 sao Kung Fu Panda 4
+        (8, 16, 4.0),  # User 6 đã đánh giá 4 sao Ma Da
     ])
 
-    scifi_action_ids = [1, 2, 3, 7, 9]
-    anim_family_ids = [4, 8, 11, 12]
-    family_drama_ids = [5, 6, 8, 12]
-    mystery_thriller_ids = [7, 10, 11, 2]
+    scifi_action_ids = [1, 2, 3, 7, 9, 15, 18]
+    anim_family_ids = [4, 8, 11, 12, 14, 17]
+    family_drama_ids = [5, 6, 8, 12, 14]
+    mystery_thriller_ids = [7, 10, 11, 13, 16, 2]
 
     rng = random.Random(2026)
 
@@ -122,34 +147,39 @@ def build_movielens_seed_ratings():
     for uid in range(101, 108):
         for mid in scifi_action_ids:
             seeds.append((uid, mid, round(rng.choice([4.5, 4.8, 5.0]), 1)))
-        seeds.append((uid, 4, round(rng.choice([4.2, 4.5]), 1)))
-        for mid in [5, 6, 8, 12]:
+        for mid in [4, 13, 17]:
+            seeds.append((uid, mid, round(rng.choice([4.0, 4.4]), 1)))
+        for mid in [5, 6, 8, 12, 14, 16]:
             seeds.append((uid, mid, round(rng.choice([1.8, 2.2, 2.5]), 1)))
         seeds.append((uid, 10, round(rng.choice([2.5, 3.0]), 1)))
 
-    # Cụm B: Fan Hoạt hình, Anime & Sci-Fi đa vũ trụ (Users 108..113)
-    for uid in range(108, 114):
+    # Cụm B: Fan Hoạt hình, Anime & Sci-Fi đa vũ trụ (Users 108..114)
+    for uid in range(108, 115):
         for mid in anim_family_ids:
             seeds.append((uid, mid, round(rng.choice([4.5, 4.9, 5.0]), 1)))
-        for mid in [1, 2, 3]:
+        for mid in [1, 2, 3, 15]:
             seeds.append((uid, mid, round(rng.choice([3.6, 4.0]), 1)))
-        for mid in [6, 10, 7]:
+        for mid in [6, 10, 7, 13, 16]:
             seeds.append((uid, mid, round(rng.choice([1.8, 2.2, 2.5]), 1)))
 
-    # Cụm C: Fan Phim Việt, Gia đình & Tình cảm Tâm lý (Users 114..119)
-    for uid in range(114, 120):
+    # Cụm C: Fan Phim Việt, Gia đình & Tình cảm Tâm lý (Users 115..121)
+    for uid in range(115, 122):
         for mid in family_drama_ids:
             seeds.append((uid, mid, round(rng.choice([4.5, 4.8, 5.0]), 1)))
-        for mid in [1, 2, 3, 9]:
+        for mid in [1, 2, 3, 9, 18]:
             seeds.append((uid, mid, round(rng.choice([1.5, 2.0, 2.5]), 1)))
-        seeds.append((uid, 10, round(rng.choice([1.8, 2.2]), 1)))
-        seeds.append((uid, 7, round(rng.choice([3.2, 3.6]), 1)))
+        for mid in [10, 13]:
+            seeds.append((uid, mid, round(rng.choice([1.8, 2.2]), 1)))
+        for mid in [7, 15, 16]:
+            seeds.append((uid, mid, round(rng.choice([3.2, 3.8]), 1)))
 
-    # Cụm D: Fan Trinh thám, Kinh dị & Bí ẩn (Users 120..124)
-    for uid in range(120, 125):
+    # Cụm D: Fan Trinh thám, Kinh dị & Bí ẩn (Users 122..128)
+    for uid in range(122, 129):
         for mid in mystery_thriller_ids:
             seeds.append((uid, mid, round(rng.choice([4.5, 4.8, 5.0]), 1)))
-        for mid in [5, 8, 12]:
+        for mid in [15, 18]:
+            seeds.append((uid, mid, round(rng.choice([3.8, 4.2]), 1)))
+        for mid in [5, 8, 12, 14]:
             seeds.append((uid, mid, round(rng.choice([1.8, 2.2, 2.5]), 1)))
 
     base_ts = 874965758
@@ -170,8 +200,9 @@ def _needs_unified_migration(cur):
     user_cols = {r[1] for r in cur.execute("PRAGMA table_info(users)").fetchall()}
     if "web_film_id" not in movie_cols or "web_user_id" not in user_cols:
         return True
-    has_film1 = cur.execute("SELECT 1 FROM movies WHERE web_film_id = 'film-1'").fetchone()
-    if not has_film1:
+    has_film18 = cur.execute("SELECT 1 FROM movies WHERE web_film_id = 'film-18'").fetchone()
+    has_usr6 = cur.execute("SELECT 1 FROM users WHERE web_user_id = 'usr-6'").fetchone()
+    if not has_film18 or not has_usr6:
         return True
     return False
 
@@ -311,9 +342,14 @@ def init_db(force_reset=False):
     if cur.execute("SELECT COUNT(*) FROM watch_history").fetchone()[0] == 0:
         now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         initial_watches = [
-            (1, 1, "order_confirmed", "ord-1", now_str),  # User 1 đã đặt/xem Avatar: The Way of Water
-            (2, 2, "order_confirmed", "ord-2", now_str),  # User 2 đã đặt/xem Dune: Part Two
-            (3, 5, "order_used", "ord-3", now_str),       # User 3 đã xem xong Lật Mặt 7
+            (1, 1, "order_confirmed", "ord-1", now_str),   # User 1 đã đặt/xem Avatar: The Way of Water
+            (2, 2, "order_confirmed", "ord-2", now_str),   # User 2 đã đặt/xem Dune: Part Two
+            (3, 5, "order_used", "ord-3", now_str),        # User 3 đã xem xong Lật Mặt 7
+            (6, 7, "order_used", "ord-6", now_str),        # User 4 đã xem xong Oppenheimer
+            (7, 6, "order_used", "ord-7", now_str),        # User 5 đã xem xong Mai
+            (7, 13, "order_confirmed", "ord-8", now_str),  # User 5 đã đặt/xem A Quiet Place: Day One
+            (8, 14, "order_confirmed", "ord-9", now_str),  # User 6 đã đặt/xem Kung Fu Panda 4
+            (1, 15, "order_used", "ord-10", now_str),      # User 1 đã xem xong Interstellar IMAX
         ]
         cur.executemany(
             "INSERT OR IGNORE INTO watch_history (user_id, movie_id, source, order_id, watched_at) VALUES (?, ?, ?, ?, ?)",

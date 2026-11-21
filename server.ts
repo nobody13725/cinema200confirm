@@ -8,6 +8,8 @@ import { GoogleGenAI, Type, type FunctionDeclaration } from "@google/genai";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const DEFAULT_GEMINI_MODEL = (process.env.GEMINI_MODEL || "").trim() || "gemini-4-hydrogen";
+
 function getGeminiClient() {
   const key = (process.env.GEMINI_API_KEY || "").trim();
   if (!key || key === "MY_GEMINI_API_KEY") {
@@ -46,13 +48,13 @@ const MOVIX_CHAT_TOOLS: FunctionDeclaration[] = [
   {
     name: "search_movies_and_showtimes",
     description:
-      "Tìm kiếm phim đang chiếu, rạp chiếu theo thành phố/tên rạp và các suất chiếu còn ghế trống theo ngày, thể loại, độ tuổi tối đa. LUÔN gọi tool này khi khách hỏi về lịch chiếu, suất chiếu ngày X ở thành phố Y (vd: lịch chiếu ngày 20/11 các rạp ở Hà Nội), phim theo độ tuổi (vd: 15 tuổi xem phim gì) hoặc rạp còn ghế không.",
+      "Tìm kiếm phim đang chiếu/sắp chiếu, rạp chiếu theo thành phố/tên rạp và các suất chiếu còn ghế trống theo ngày, buổi (sáng/chiều/tối/khuya), thể loại, độ tuổi tối đa, hoặc số ghế trống tối thiểu. LUÔN gọi tool này khi khách hỏi lịch chiếu, suất chiếu ngày X, thời gian còn lại tới suất chiếu, phim theo độ tuổi, diễn viên/đạo diễn, hoặc rạp còn ghế.",
     parameters: {
       type: Type.OBJECT,
       properties: {
         query: {
           type: Type.STRING,
-          description: "Từ khóa tên phim hoặc nội dung tìm kiếm.",
+          description: "Từ khóa tên phim, diễn viên, đạo diễn hoặc nội dung tìm kiếm.",
         },
         genre: {
           type: Type.STRING,
@@ -64,7 +66,7 @@ const MOVIX_CHAT_TOOLS: FunctionDeclaration[] = [
         },
         city: {
           type: Type.STRING,
-          description: "Tên thành phố / khu vực rạp (vd: Hà Nội, TP. Hồ Chí Minh, Sài Gòn, Đà Nẵng, Cần Thơ, Hải Phòng).",
+          description: "Tên thành phố / khu vực rạp (vd: Hà Nội, TP. Hồ Chí Minh, Sài Gòn, Đà Nẵng, Cần Thơ).",
         },
         cinema_name: {
           type: Type.STRING,
@@ -73,6 +75,18 @@ const MOVIX_CHAT_TOOLS: FunctionDeclaration[] = [
         date: {
           type: Type.STRING,
           description: "Ngày chiếu (YYYY-MM-DD, DD/MM/YYYY, DD/MM hoặc 'hôm nay', 'ngày mai', 'ngày kia').",
+        },
+        time_of_day: {
+          type: Type.STRING,
+          description: "Buổi trong ngày nếu khách yêu cầu: 'morning' (06:00-11:59), 'afternoon' (12:00-17:59), 'evening' (18:00-21:59), 'late' (22:00-23:59).",
+        },
+        min_seats: {
+          type: Type.INTEGER,
+          description: "Số lượng ghế trống tối thiểu cần có trong suất chiếu (vd: đi nhóm 4 hoặc 6 người).",
+        },
+        sort_by: {
+          type: Type.STRING,
+          description: "Cách sắp xếp: 'earliest' (suất sớm nhất), 'rating' (điểm phim cao nhất), 'cheapest' (giá vé rẻ nhất).",
         },
       },
     },
@@ -155,10 +169,17 @@ const MOVIX_CHAT_TOOLS: FunctionDeclaration[] = [
   {
     name: "get_ticket_pricing_and_combos",
     description:
-      "Lấy bảng giá vé (Standard, VIP, Sweetbox) và danh sách combo bắp nước đang mở bán tại rạp Movix.",
+      "Lấy bảng giá vé (Standard, VIP, Sweetbox), danh sách combo bắp nước và TÍNH TOÁN chi tiết tổng tiền vé + combo + mã giảm giá nếu khách hỏi dự toán chi phí.",
     parameters: {
       type: Type.OBJECT,
-      properties: {},
+      properties: {
+        standard_qty: { type: Type.INTEGER, description: "Số lượng vé ghế Thường (80.000đ/vé)." },
+        vip_qty: { type: Type.INTEGER, description: "Số lượng vé ghế VIP (95.000đ/vé)." },
+        sweetbox_qty: { type: Type.INTEGER, description: "Số lượng cặp ghế đôi Sweetbox (150.000đ/cặp)." },
+        combo_name: { type: Type.STRING, description: "Tên combo khách muốn mua thêm (vd: Solo, Đôi, Couple)." },
+        combo_qty: { type: Type.INTEGER, description: "Số lượng combo." },
+        promo_code: { type: Type.STRING, description: "Mã khuyến mãi áp dụng (nếu khách nhắc tới)." },
+      },
     },
   },
 ];
@@ -173,7 +194,16 @@ function stripVN(str: string): string {
     .trim();
 }
 
-function addDaysYMD(offsetDays: number): string {
+function compactText(str: string): string {
+  return stripVN(str).replace(/[^a-z0-9]/g, "");
+}
+
+function addDaysYMD(offsetDays: number, baseYMD?: string): string {
+  if (baseYMD && /^\d{4}-\d{2}-\d{2}$/.test(baseYMD)) {
+    const [y, m, d] = baseYMD.split("-").map(Number);
+    const dt = new Date(Date.UTC(y, m - 1, d + offsetDays));
+    return `${dt.getUTCFullYear()}-${String(dt.getUTCMonth() + 1).padStart(2, "0")}-${String(dt.getUTCDate()).padStart(2, "0")}`;
+  }
   const d = new Date();
   d.setDate(d.getDate() + offsetDays);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -184,8 +214,8 @@ function resolveDateYMD(input: string, fallbackTodayYMD: string): string {
   if (!raw) return "";
   const plain = stripVN(raw);
   if (plain.includes("hom nay") || plain === "today") return fallbackTodayYMD;
-  if (plain.includes("ngay mai") || plain === "mai" || plain === "tomorrow") return addDaysYMD(1);
-  if (plain.includes("ngay kia") || plain.includes("ngay mot")) return addDaysYMD(2);
+  if (plain.includes("ngay mai") || plain === "mai" || plain === "tomorrow") return addDaysYMD(1, fallbackTodayYMD);
+  if (plain.includes("ngay kia") || plain.includes("ngay mot")) return addDaysYMD(2, fallbackTodayYMD);
   if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
   const full = raw.match(/(\d{1,2})[/-](\d{1,2})[/-](\d{4})/);
   if (full) {
@@ -193,7 +223,8 @@ function resolveDateYMD(input: string, fallbackTodayYMD: string): string {
   }
   const short = raw.match(/(\d{1,2})[/-](\d{1,2})/);
   if (short) {
-    return `${new Date().getFullYear()}-${short[2].padStart(2, "0")}-${short[1].padStart(2, "0")}`;
+    const year = /^\d{4}/.test(fallbackTodayYMD) ? fallbackTodayYMD.slice(0, 4) : String(new Date().getFullYear());
+    return `${year}-${short[2].padStart(2, "0")}-${short[1].padStart(2, "0")}`;
   }
   return "";
 }
@@ -209,12 +240,27 @@ const AI_EVALUATE_SCRIPT = path.resolve(__dirname, "AI_Recommendation/evaluate_m
 const AI_SYNC_SCRIPT = path.resolve(__dirname, "AI_Recommendation/sync_data.py");
 
 function runPythonScript(scriptPath: string, args: string[], stdinPayload?: unknown) {
-  const result = spawnSync("python3", [scriptPath, ...args], {
+  const candidates = process.env.PYTHON_BIN
+    ? [process.env.PYTHON_BIN]
+    : process.platform === "win32"
+    ? ["python", "python3"]
+    : ["python3", "python"];
+
+  let result = spawnSync(candidates[0], [scriptPath, ...args], {
     cwd: __dirname,
     input: stdinPayload !== undefined ? JSON.stringify(stdinPayload) : undefined,
     encoding: "utf-8",
     maxBuffer: 10 * 1024 * 1024,
   });
+
+  if (result.error && (result.error as NodeJS.ErrnoException).code === "ENOENT" && candidates[1]) {
+    result = spawnSync(candidates[1], [scriptPath, ...args], {
+      cwd: __dirname,
+      input: stdinPayload !== undefined ? JSON.stringify(stdinPayload) : undefined,
+      encoding: "utf-8",
+      maxBuffer: 10 * 1024 * 1024,
+    });
+  }
 
   if (result.error) {
     throw result.error;
@@ -460,8 +506,34 @@ async function startServer() {
     const staffLookupOrders = Array.isArray(ctx.staffLookupOrders) ? ctx.staffLookupOrders : [];
 
     const now = new Date();
-    const todayYMD = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-    const nowHM = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+    const todayYMD =
+      typeof ctx.clientTodayYMD === "string" && /^\d{4}-\d{2}-\d{2}$/.test(ctx.clientTodayYMD)
+        ? ctx.clientTodayYMD
+        : `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    const nowHM =
+      typeof ctx.clientNowHM === "string" && /^\d{2}:\d{2}$/.test(ctx.clientNowHM)
+        ? ctx.clientNowHM
+        : `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+
+    const toMinutesEpoch = (ymd: string, hm: string) => {
+      const [y, m, d] = ymd.split("-").map(Number);
+      const [hh, mm] = hm.split(":").map(Number);
+      if (!y || !m || !d) return 0;
+      return Math.floor(Date.UTC(y, m - 1, d, Number.isFinite(hh) ? hh : 0, Number.isFinite(mm) ? mm : 0) / 60000);
+    };
+    const nowMinsEpoch = toMinutesEpoch(todayYMD, nowHM);
+    const formatWaitVN = (diffMins: number) => {
+      const m = Math.max(1, Math.round(diffMins));
+      const totalH = Math.floor(m / 60);
+      const remM = m % 60;
+      if (totalH >= 24) {
+        const d = Math.floor(totalH / 24);
+        const h = totalH % 24;
+        return `${totalH} giờ${remM > 0 ? ` ${remM} phút` : ""} (${d} ngày${h > 0 ? ` ${h} giờ` : ""}${remM > 0 ? ` ${remM} phút` : ""})`;
+      }
+      if (totalH > 0) return remM > 0 ? `${totalH} giờ ${remM} phút` : `${totalH} giờ`;
+      return `${remM} phút`;
+    };
 
     const resolveCity = (cityInput: string) => {
       const needle = stripVN(cityInput);
@@ -550,27 +622,49 @@ async function startServer() {
         const resolvedCity = resolveCity(cityArg || cinemaArg);
         const resolvedCinema = cinemaArg && !resolveCity(cinemaArg) ? resolveCinema(cinemaArg, resolvedCity) : null;
         const dateFilter = resolveDateYMD(String(args.date || ""), todayYMD);
+        const timeOfDay = String(args.time_of_day || "").trim().toLowerCase();
+        const minSeats = Math.max(1, Number(args.min_seats || 1));
+        const sortBy = String(args.sort_by || "earliest").trim().toLowerCase();
 
+        const matchesTimeOfDay = (hm: string) => {
+          if (!timeOfDay) return true;
+          const [hh] = String(hm || "00:00").split(":").map(Number);
+          if (!Number.isFinite(hh)) return true;
+          if (timeOfDay === "morning") return hh >= 6 && hh < 12;
+          if (timeOfDay === "afternoon") return hh >= 12 && hh < 18;
+          if (timeOfDay === "evening") return hh >= 18 && hh < 22;
+          if (timeOfDay === "late") return hh >= 22 || hh < 6;
+          return true;
+        };
+
+        const qCompact = compactText(q);
         const matchedFilms = films.filter((f: Record<string, unknown>) => {
           const title = String(f.title || "").toLowerCase();
+          const otherTitlesText = Array.isArray(f.otherTitles) ? f.otherTitles.join(" ") : "";
+          const actorsText = Array.isArray(f.actors) ? f.actors.join(" ") : "";
+          const directorsText = Array.isArray(f.directors) ? f.directors.join(" ") : "";
           const fGenre = String(f.genre || "").toLowerCase();
           const desc = String(f.description || "").toLowerCase();
           const ratingStr = String(f.ageRating || "P").toUpperCase();
 
           if (maxAge !== null && Number.isFinite(maxAge)) {
-            if (maxAge < 18 && (ratingStr === "C18" || ratingStr === "18+")) return false;
+            if (maxAge < 18 && (ratingStr === "C18" || ratingStr === "T18" || ratingStr === "18+")) return false;
             if (maxAge < 16 && (ratingStr === "T16" || ratingStr === "C16" || ratingStr === "16+")) return false;
             if (maxAge < 13 && (ratingStr === "T13" || ratingStr === "13+")) return false;
           }
-          if (q && !stripVN(title).includes(stripVN(q)) && !stripVN(desc).includes(stripVN(q)) && !stripVN(fGenre).includes(stripVN(q))) {
-            return false;
+          if (q) {
+            const searchablePlain = stripVN(`${title} ${otherTitlesText} ${actorsText} ${directorsText} ${desc} ${fGenre}`);
+            const searchableCompact = searchablePlain.replace(/[^a-z0-9]/g, "");
+            if (!searchablePlain.includes(stripVN(q)) && !(qCompact && searchableCompact.includes(qCompact))) {
+              return false;
+            }
           }
           if (genre && !stripVN(fGenre).includes(stripVN(genre)) && !stripVN(desc).includes(stripVN(genre))) return false;
           return true;
         });
 
         const typedMatchedFilms = matchedFilms as Array<Record<string, unknown>>;
-        const results: Array<{ film: Record<string, unknown>; upcomingShowtimes: Array<Record<string, unknown>> }> = typedMatchedFilms
+        let results: Array<{ film: Record<string, unknown>; upcomingShowtimes: Array<Record<string, unknown>> }> = typedMatchedFilms
           .map((f) => {
             const fShowtimes = showtimes
               .filter((st: Record<string, unknown>) => {
@@ -579,6 +673,7 @@ async function startServer() {
                 const stTime = String(st.startTime || "");
                 if (dateFilter && stDate !== dateFilter) return false;
                 if (stDate < todayYMD || (stDate === todayYMD && stTime <= nowHM)) return false;
+                if (!matchesTimeOfDay(stTime)) return false;
                 const cin = cinemas.find((c: Record<string, unknown>) => c.id === st.cinemaId);
                 if (resolvedCity && cin?.cityId !== resolvedCity.id) return false;
                 if (resolvedCinema && cin?.id !== resolvedCinema.id) return false;
@@ -593,12 +688,21 @@ async function startServer() {
                     ? st.seatsBooked.length
                     : 0;
                 const avail = (Number(st.totalSeats) || 96) - bookedCount;
-                return avail > 0;
+                return avail >= minSeats;
               })
-              .slice(0, 4)
+              .sort((a: Record<string, unknown>, b: Record<string, unknown>) => {
+                if (sortBy === "cheapest") {
+                  return Number(a.basePrice || 80000) - Number(b.basePrice || 80000);
+                }
+                const da = resolveDateYMD(String(a.date || ""), todayYMD) || todayYMD;
+                const db = resolveDateYMD(String(b.date || ""), todayYMD) || todayYMD;
+                return `${da} ${a.startTime || ""}`.localeCompare(`${db} ${b.startTime || ""}`);
+              })
+              .slice(0, 12)
               .map((st: Record<string, unknown>) => {
                 const cin = cinemas.find((c: Record<string, unknown>) => c.id === st.cinemaId);
                 const stDate = resolveDateYMD(String(st.date || ""), todayYMD) || todayYMD;
+                const stTime = String(st.startTime || "00:00");
                 const bookedCount =
                   typeof st.seatsBookedCount === "number"
                     ? st.seatsBookedCount
@@ -606,6 +710,7 @@ async function startServer() {
                     ? st.seatsBooked.length
                     : 0;
                 const avail = (Number(st.totalSeats) || 96) - bookedCount;
+                const minutesUntil = Math.max(0, toMinutesEpoch(stDate, stTime) - nowMinsEpoch);
                 return {
                   showtimeId: st.id,
                   cinemaId: st.cinemaId,
@@ -615,6 +720,8 @@ async function startServer() {
                   startTime: st.startTime,
                   basePrice: Number(st.basePrice || 80000),
                   availableSeats: avail,
+                  minutesUntil,
+                  timeUntilText: formatWaitVN(minutesUntil),
                 };
               });
 
@@ -623,8 +730,12 @@ async function startServer() {
               upcomingShowtimes: fShowtimes,
             };
           })
-          .filter((item) => (!dateFilter && !resolvedCity && !resolvedCinema) || item.upcomingShowtimes.length > 0)
-          .slice(0, 6);
+          .filter((item) => (!dateFilter && !resolvedCity && !resolvedCinema && !timeOfDay && minSeats <= 1) || item.upcomingShowtimes.length > 0);
+
+        if (sortBy === "rating") {
+          results = results.sort((a, b) => Number(b.film.rating || 0) - Number(a.film.rating || 0));
+        }
+        results = results.slice(0, 6);
 
         const navParams: Record<string, unknown> = {};
         if (dateFilter) navParams.date = dateFilter;
@@ -670,22 +781,36 @@ async function startServer() {
 
         return {
           todayYMD,
+          nowHM,
           appliedFilters: {
             date: dateFilter || null,
+            timeOfDay: timeOfDay || null,
             city: resolvedCity ? resolvedCity.name : null,
             cinema: resolvedCinema ? resolvedCinema.name : null,
+            minSeats: minSeats > 1 ? minSeats : null,
           },
           matchedCount: results.length,
-          movies: results.map((item) => ({
-            id: item.film.id,
-            title: item.film.title,
-            genre: item.film.genre,
-            ageRating: item.film.ageRating || "P",
-            duration: item.film.duration,
-            rating: item.film.rating,
-            status: item.film.status,
-            upcomingShowtimes: item.upcomingShowtimes,
-          })),
+          movies: results.map((item) => {
+            const cinemasSet = Array.from(new Set(item.upcomingShowtimes.map((s) => String(s.cinemaName))));
+            return {
+              id: item.film.id,
+              title: item.film.title,
+              otherTitles: item.film.otherTitles || [],
+              genre: item.film.genre,
+              ageRating: item.film.ageRating || "P",
+              duration: item.film.duration,
+              rating: item.film.rating,
+              status: item.film.status,
+              format: item.film.format || "2D",
+              directors: item.film.directors || [],
+              actors: item.film.actors || [],
+              description: item.film.description || "",
+              cinemasCount: cinemasSet.length,
+              cinemasScreening: cinemasSet,
+              earliestShowtimeSummary: item.upcomingShowtimes[0] || null,
+              upcomingShowtimes: item.upcomingShowtimes,
+            };
+          }),
         };
       }
 
@@ -698,8 +823,14 @@ async function startServer() {
         const resolvedCinema = args.cinema_name ? resolveCinema(String(args.cinema_name), resolvedCity) : null;
         const dateYMD = resolveDateYMD(String(args.date || ""), todayYMD);
         const movieTitleNeedle = stripVN(String(args.movie_title || ""));
+        const movieCompactNeedle = compactText(String(args.movie_title || ""));
         const matchedFilm = movieTitleNeedle
-          ? films.find((f: Record<string, unknown>) => stripVN(String(f.title || "")).includes(movieTitleNeedle))
+          ? films.find((f: Record<string, unknown>) => {
+              const allNames = [f.title, ...(Array.isArray(f.otherTitles) ? f.otherTitles : [])].join(" ");
+              const p = stripVN(allNames);
+              const c = compactText(allNames);
+              return p.includes(movieTitleNeedle) || (movieCompactNeedle && c.includes(movieCompactNeedle));
+            })
           : null;
 
         const navParams: Record<string, unknown> = {};
@@ -872,13 +1003,53 @@ async function startServer() {
       }
 
       if (name === "get_ticket_pricing_and_combos") {
+        const stdQty = Math.max(0, Number(args.standard_qty || 0));
+        const vipQty = Math.max(0, Number(args.vip_qty || 0));
+        const sbQty = Math.max(0, Number(args.sweetbox_qty || 0));
+        const comboQty = Math.max(0, Number(args.combo_qty || (args.combo_name ? 1 : 0)));
+        const comboQ = stripVN(String(args.combo_name || ""));
+        const matchedCombo = comboQ
+          ? comboFoods.find((c: Record<string, unknown>) => stripVN(String(c.name || "")).includes(comboQ))
+          : null;
+        const promoQ = String(args.promo_code || "").trim().toUpperCase();
+        const matchedPromo = promoQ
+          ? promotions.find((p: Record<string, unknown>) => String(p.code || "").trim().toUpperCase() === promoQ)
+          : null;
+
+        const ticketSubtotal = stdQty * 80000 + vipQty * 95000 + sbQty * 150000;
+        const comboSubtotal = matchedCombo && comboQty > 0 ? Number(matchedCombo.price || 0) * comboQty : 0;
+        const subtotal = ticketSubtotal + comboSubtotal;
+        let discount = 0;
+        if (matchedPromo && subtotal > 0) {
+          if (matchedPromo.discountPercent) {
+            discount = Math.round((subtotal * Number(matchedPromo.discountPercent)) / 100);
+            if (matchedPromo.maxDiscount) discount = Math.min(discount, Number(matchedPromo.maxDiscount));
+          } else if (matchedPromo.maxDiscount) {
+            discount = Math.min(Number(matchedPromo.maxDiscount), subtotal);
+          }
+        }
+        const finalTotal = Math.max(0, subtotal - discount);
+
         return {
-          seatPricing: {
+          seatPricesVND: {
             standard: 80000,
             vip: 95000,
             sweetboxCouple: 150000,
           },
           comboFoods: comboFoods.slice(0, 6),
+          estimate:
+            subtotal > 0
+              ? {
+                  standardQty: stdQty,
+                  vipQty,
+                  sweetboxQty: sbQty,
+                  matchedCombo: matchedCombo ? { name: matchedCombo.name, price: matchedCombo.price, qty: comboQty } : null,
+                  subtotal,
+                  promoCode: matchedPromo ? matchedPromo.code : null,
+                  discount,
+                  finalTotal,
+                }
+              : null,
         };
       }
 
@@ -889,18 +1060,35 @@ async function startServer() {
       ? `Người dùng đang đăng nhập: ${user.fullName || user.name || "Khán giả"} (id=${user.id}, role=${user.role || "customer"}).`
       : "Người dùng hiện là khách vãng lai chưa đăng nhập.";
 
+    const catalogFilmDigest = films
+      .slice(0, 18)
+      .map(
+        (f: Record<string, unknown>) =>
+          `- ${f.title}${Array.isArray(f.otherTitles) && f.otherTitles.length > 0 ? ` (${f.otherTitles[0]})` : ""} [${f.status || "Đang chiếu"} | ${f.ageRating || "P"} | ${f.genre || ""} | ${f.rating || 8.5}★ | ${f.duration || 120}p]`
+      )
+      .join("\n");
+
+    const cinemaDigest = cinemas
+      .slice(0, 12)
+      .map((c: Record<string, unknown>) => `- ${c.name} (${c.city || ""})`)
+      .join("\n");
+
     const systemInstruction = [
-      "Bạn là Trợ lý AI chính thức của hệ thống rạp chiếu phim Movix.",
+      "Bạn là Trợ lý AI thông minh chính thức của hệ thống rạp chiếu phim Movix.",
       userSummary,
-      `Ngày giờ hiện tại tại rạp: ${todayYMD} ${nowHM}.`,
-      "Quy tắc bắt buộc:",
-      "1. Chỉ trả lời các chủ đề liên quan đến phim ảnh, gợi ý phim SVD, lịch chiếu, rạp, giá vé, combo bắp nước, khuyến mãi, vé của tôi, lịch sử đã xem và quy trình duyệt vé/đánh giá tại Movix. Từ chối lịch sự nếu câu hỏi ngoài phạm vi (thời tiết, toán học, chính trị...).",
-      "2. LUÔN dùng Function Calling để tra dữ liệu thật trước khi trả lời về phim, suất chiếu, gợi ý SVD, mã giảm giá hoặc trạng thái vé. Tuyệt đối KHÔNG bịa tên phim, giờ chiếu hoặc mã giảm giá không có trong kết quả tool.",
-      "3. Khi người dùng muốn xem/đi tới một trang có bộ lọc cụ thể (vd: 'tôi muốn xem lịch chiếu ngày 20/11 các rạp ở Hà Nội', 'cho xem các rạp ở TP.HCM', 'tìm phim hoạt hình', 'mở trang khuyến mãi', 'xem lịch sử phim đã xem'), HÃY gọi search_movies_and_showtimes (nếu hỏi suất chiếu) VÀ/HOẶC navigate_movix_page để hệ thống tạo nút bấm mở sẵn trang kèm bộ lọc chính xác.",
-      "4. Tuân thủ nghiêm giới hạn độ tuổi: nếu khách nêu tuổi nhỏ hơn 18/16/13, truyền max_age vào search_movies_and_showtimes và tuyệt đối không gợi ý phim vượt tuổi.",
-      "5. Nhớ nguyên tắc Movix: vé đang chờ duyệt (pending) chưa tính là đã xem; khi nhân viên duyệt vé (confirmed) hoặc check-in (used) thì phim được tính là đã xem và mở khóa quyền đánh giá.",
-      "6. Trả lời bằng tiếng Việt tự nhiên, ngắn gọn, rõ ràng, nêu rõ rạp/giờ chiếu và nhắc khách bấm nút bên dưới để mở trang tương ứng (không tự nhận là đang tự động chuyển trang).",
-      "7. Nếu user có vai trò employee (nhân viên), tuyệt đối không tiết lộ doanh thu hay chức năng quản trị của Admin.",
+      `Ngày giờ hiện tại tại trình duyệt của khách: ${todayYMD} ${nowHM}.`,
+      "Danh mục phim hiện có trên Movix:\n" + (catalogFilmDigest || "(chưa có dữ liệu phim)"),
+      "Hệ thống rạp Movix:\n" + (cinemaDigest || "(chưa có dữ liệu rạp)"),
+      "Quy tắc suy luận thông minh & bắt buộc:",
+      "1. Hiểu ngữ cảnh hội thoại nhiều lượt (multi-turn): Nếu khách hỏi nối tiếp như 'phim đó', 'thế còn ngày mai?', 'ở Sài Gòn thì sao?', 'đặt vé luôn', hãy tự suy ra tên phim/thành phố/rạp từ các tin nhắn ngay trước đó trong lịch sử hội thoại.",
+      "2. Chỉ trả lời các chủ đề liên quan đến điện ảnh, gợi ý phim SVD, lịch chiếu, rạp, tính tiền vé & combo, khuyến mãi, tra cứu vé, lịch sử đã xem và quy trình duyệt vé/đánh giá tại Movix.",
+      "3. LUÔN dùng Function Calling để lấy dữ liệu chính xác theo thời gian thực (giờ chiếu, ghế trống, điểm SVD, mã giảm giá, đơn vé). Có thể gọi nhiều tool song song trong 1 lượt để trả lời nhanh nhất và tránh timeout.",
+      "4. Khi khách hỏi tổng hợp nhiều điều kiện (vd: '15 tuổi tối nay ở Hà Nội xem phim hành động nào đủ 4 ghế?'), hãy truyền đồng thời max_age, time_of_day, city, date, genre, min_seats vào search_movies_and_showtimes.",
+      "5. Nếu khách hỏi thời gian đếm ngược/chờ đợi (vd: 'bao nhiêu giờ nữa thì ngày mai phim X chiếu', 'mấy tiếng nữa', 'suất sớm nhất'), HÃY trả lời thẳng khoảng thời gian còn lại (dùng trường timeUntilText của earliestShowtimeSummary), tên rạp và giờ bắt đầu — KHÔNG liệt kê tràn lan toàn bộ lịch chiếu.",
+      "6. Khi khách hỏi tính tổng chi phí vé + combo + mã giảm giá, gọi get_ticket_pricing_and_combos với số lượng từng loại ghế và mã khuyến mãi để tính chính xác từng đồng.",
+      "7. Khi khách muốn mở trang với bộ lọc (Lịch chiếu theo ngày/thành phố, Rạp, Phim, Khuyến mãi, Hồ sơ), gọi search_movies_and_showtimes VÀ/HOẶC navigate_movix_page để tạo nút bấm sẵn bộ lọc.",
+      "8. Trả lời bằng tiếng Việt tự nhiên, súc tích, rõ ràng, KHÔNG dùng ký tự markdown thô như ** hoặc ## vì khung chat hiển thị văn bản thuần. Nhắc nhẹ ưu đãi/nút đặt vé liên quan khi thực sự hữu ích.",
+      "9. Tuân thủ giới hạn độ tuổi nghiêm ngặt (không gợi ý C18/T18/T16/T13 cho khán giả chưa đủ tuổi) và nếu user là employee thì không tiết lộ doanh thu hay chức năng Admin.",
     ].join("\n");
 
     try {
@@ -917,15 +1105,16 @@ async function startServer() {
 
       const toolsUsed: string[] = [];
       let response = await ai.models.generateContent({
-        model: "gemini-4-hydrogen",
+        model: DEFAULT_GEMINI_MODEL,
         contents: contents as never,
         config: {
           systemInstruction,
+          temperature: 0.35,
           tools: [{ functionDeclarations: MOVIX_CHAT_TOOLS }],
         },
       });
 
-      for (let step = 0; step < 4; step++) {
+      for (let step = 0; step < 3; step++) {
         const calls = response.functionCalls;
         if (!calls || calls.length === 0) break;
 
@@ -958,10 +1147,11 @@ async function startServer() {
         });
 
         response = await ai.models.generateContent({
-          model: "gemini-4-hydrogen",
+          model: DEFAULT_GEMINI_MODEL,
           contents: contents as never,
           config: {
             systemInstruction,
+            temperature: 0.35,
             tools: [{ functionDeclarations: MOVIX_CHAT_TOOLS }],
           },
         });
@@ -970,24 +1160,39 @@ async function startServer() {
       const replyText = (response.text || "").trim() || "Tôi đã kiểm tra dữ liệu Movix cho bạn, mời bạn xem các gợi ý bên dưới nhé!";
       return res.json({
         reply: replyText,
-        model: "gemini-4-hydrogen",
+        model: DEFAULT_GEMINI_MODEL,
         toolsUsed: Array.from(new Set(toolsUsed)),
         actions: collectedActions,
         autoNavigate: autoNavigateTarget,
       });
     } catch (err) {
       const msg = (err as Error)?.message || "Không thể kết nối đến Gemini API.";
-      const status = msg.includes("403") || msg.includes("PERMISSION_DENIED")
-        ? 403
-        : msg.includes("429") || msg.includes("RESOURCE_EXHAUSTED")
-        ? 429
-        : msg.includes("503") || msg.includes("UNAVAILABLE")
-        ? 503
-        : msg.includes("400") || msg.includes("API_KEY_INVALID")
-        ? 400
-        : 500;
+      const lower = msg.toLowerCase();
+      const status =
+        lower.includes("504") ||
+        lower.includes("deadline_exceeded") ||
+        lower.includes("deadline expired") ||
+        lower.includes("etimedout") ||
+        lower.includes("timeout") ||
+        lower.includes("aborted")
+          ? 504
+          : msg.includes("403") || msg.includes("PERMISSION_DENIED")
+          ? 403
+          : msg.includes("429") || msg.includes("RESOURCE_EXHAUSTED")
+          ? 429
+          : msg.includes("503") || lower.includes("unavailable") || lower.includes("high demand")
+          ? 503
+          : msg.includes("400") || msg.includes("API_KEY_INVALID")
+          ? 400
+          : 500;
       return res.status(status).json({
         error: `Lỗi Gemini AI (${status}): ${msg}`,
+        code:
+          status === 504
+            ? "GEMINI_TIMEOUT"
+            : status === 503
+            ? "GEMINI_UNAVAILABLE"
+            : undefined,
       });
     }
   });
