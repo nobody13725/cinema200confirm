@@ -28,25 +28,39 @@ export default function Home({ go, user }) {
 
   const loadViewerRecs = () => {
     const uid = user?.id || "guest";
-    Promise.allSettled([
-      cfService.getRecommendationsByUser(uid, 5),
-      cfService.getViewerRecommendations(user),
-    ]).then(([aiRes, cfgRes]) => {
-      const aiData = aiRes.status === "fulfilled" ? aiRes.value : null;
-      const cfgData = cfgRes.status === "fulfilled" ? cfgRes.value : null;
-      if (aiData && Array.isArray(aiData.recommendations)) {
-        setViewerRecs({
-          enabled: cfgData ? cfgData.enabled !== false : true,
-          section_title: cfgData?.section_title || "Gợi ý phim dành riêng cho bạn",
-          is_personalized: aiData.strategy === "svd",
-          strategy: aiData.strategy,
-          user_id: aiData.user_id,
-          recommendations: aiData.recommendations,
+    cfService
+      .getViewerRecommendations(user)
+      .then((cfgData) => {
+        if (cfgData && Array.isArray(cfgData.recommendations)) {
+          setViewerRecs(cfgData);
+          return;
+        }
+        return cfService.getRecommendationsByUser(uid, 5).then((aiData) => {
+          if (aiData && Array.isArray(aiData.recommendations)) {
+            setViewerRecs({
+              enabled: true,
+              section_title: "Gợi ý phim dành riêng cho bạn",
+              is_personalized: aiData.strategy === "svd",
+              recommendations: aiData.recommendations,
+            });
+          }
         });
-      } else if (cfgData) {
-        setViewerRecs(cfgData);
-      }
-    });
+      })
+      .catch(() => {
+        cfService
+          .getRecommendationsByUser(uid, 5)
+          .then((aiData) => {
+            if (aiData && Array.isArray(aiData.recommendations)) {
+              setViewerRecs({
+                enabled: true,
+                section_title: "Gợi ý phim dành riêng cho bạn",
+                is_personalized: aiData.strategy === "svd",
+                recommendations: aiData.recommendations,
+              });
+            }
+          })
+          .catch(() => {});
+      });
   };
 
   const loadData = () => {
@@ -147,7 +161,7 @@ export default function Home({ go, user }) {
         <PromoBannerCarousel banners={banners} go={go} />
       </section>
 
-      {/* Top 5 Gợi ý phim từ hệ thống AI (GET /api/recommendations/:userId) */}
+      {/* Gợi ý phim từ hệ thống AI SVD (Đồng bộ 1-1 với cài đặt Admin SVD) */}
       {viewerRecs?.enabled !== false && (viewerRecs?.recommendations || []).length > 0 && (
         <section className="section container" style={{ paddingBottom: 8 }}>
           <div className="section-head" style={{ flexWrap: "wrap", gap: 12 }}>
@@ -155,14 +169,14 @@ export default function Home({ go, user }) {
               <h2>
                 {user
                   ? `${viewerRecs.section_title || "Gợi ý phim dành riêng cho bạn"} — ${user.fullName || user.name}`
-                  : "Top 5 phim gợi ý nổi bật tại Movix"}
+                  : viewerRecs.section_title || "Phim gợi ý nổi bật tại Movix"}
               </h2>
               <p style={{ fontSize: 13.5, color: "var(--ink-500)", marginTop: 2 }}>
                 {user && viewerRecs.is_personalized
-                  ? `Đề xuất Top 5 dựa trên lịch sử đánh giá riêng của tài khoản ${user.email || user.id} (đã loại trừ phim bạn đã đánh giá/xem)`
+                  ? `Đề xuất ${viewerRecs.recommendations.length} phim phù hợp nhất cho ${user.email || user.id} (đã loại trừ phim bạn đã xem/đánh giá)`
                   : user
-                  ? "Tài khoản mới chưa có đủ lịch sử đánh giá — hiển thị Top 5 phim được khán giả đánh giá cao nhất"
-                  : "Đăng nhập để nhận Top 5 gợi ý cá nhân hóa theo lịch sử đánh giá riêng của bạn"}
+                  ? `Hiển thị ${viewerRecs.recommendations.length} phim được khán giả đánh giá cao nhất`
+                  : `Đăng nhập để nhận gợi ý cá nhân hóa theo lịch sử xem & đánh giá của bạn`}
               </p>
             </div>
             {!user && (
@@ -179,7 +193,7 @@ export default function Home({ go, user }) {
               gap: 18,
             }}
           >
-            {viewerRecs.recommendations.slice(0, 5).map((rec) => {
+            {viewerRecs.recommendations.map((rec) => {
               const filmIdKey = rec.web_film_id || rec.movie_id;
               const matchedFilm =
                 films.find((f) => f.id === filmIdKey) ||
@@ -188,7 +202,7 @@ export default function Home({ go, user }) {
                   title: rec.title,
                   posterUrl: rec.poster_url,
                   thumbnail: rec.poster_url,
-                  rating: rec.predicted_rating,
+                  rating: rec.predicted_rating || rec.score,
                   status: rec.status || "Đang chiếu",
                 };
               return (
@@ -206,7 +220,7 @@ export default function Home({ go, user }) {
                       Thể loại: <strong>{rec.genres}</strong>
                     </div>
                   )}
-                  {(rec.predicted_rating || rec.reason) && (
+                  {(rec.predicted_rating || rec.score || rec.reason) && (
                     <div
                       style={{
                         fontSize: 12,
@@ -216,7 +230,7 @@ export default function Home({ go, user }) {
                         fontWeight: 500,
                       }}
                     >
-                      {rec.reason || `Dự đoán SVD: ${rec.predicted_rating}/5 ★`}
+                      {rec.reason || `Dự đoán SVD: ${rec.predicted_rating || rec.score}/5 ★`}
                     </div>
                   )}
                 </div>

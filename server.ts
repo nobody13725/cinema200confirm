@@ -363,12 +363,18 @@ async function startServer() {
   // API (Viewer): Get generated personalized recommendations for homepage/movie detail (no admin SVD internals)
   app.get("/api/cf/viewer-recommendations", (req, res) => {
     try {
+      const alphaNum =
+        req.query.alpha !== undefined && req.query.alpha !== "" && req.query.alpha !== "null"
+          ? Number(req.query.alpha)
+          : NaN;
       const payload = {
         web_user_id: req.query.webUserId ? String(req.query.webUserId) : undefined,
         email: req.query.email ? String(req.query.email) : undefined,
         user_id: req.query.userId ? Number(req.query.userId) : undefined,
         full_name: req.query.fullName ? String(req.query.fullName) : undefined,
         limit: req.query.limit ? Number(req.query.limit) : undefined,
+        alpha: Number.isFinite(alphaNum) ? alphaNum : undefined,
+        genre_filter: req.query.genreFilter ? String(req.query.genreFilter) : undefined,
       };
       const data = runPythonEngine(["viewer_recs"], payload);
       res.json(data);

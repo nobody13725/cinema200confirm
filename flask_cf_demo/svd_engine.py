@@ -344,12 +344,17 @@ def init_db(force_reset=False):
         initial_watches = [
             (1, 1, "order_confirmed", "ord-1", now_str),   # User 1 đã đặt/xem Avatar: The Way of Water
             (2, 2, "order_confirmed", "ord-2", now_str),   # User 2 đã đặt/xem Dune: Part Two
+            (2, 4, "order_confirmed", "ord-5", now_str),   # User 2 đã đặt/xem Spider-Man: Across the Spider-Verse
             (3, 5, "order_used", "ord-3", now_str),        # User 3 đã xem xong Lật Mặt 7
             (6, 7, "order_used", "ord-6", now_str),        # User 4 đã xem xong Oppenheimer
             (7, 6, "order_used", "ord-7", now_str),        # User 5 đã xem xong Mai
             (7, 13, "order_confirmed", "ord-8", now_str),  # User 5 đã đặt/xem A Quiet Place: Day One
             (8, 14, "order_confirmed", "ord-9", now_str),  # User 6 đã đặt/xem Kung Fu Panda 4
             (1, 15, "order_used", "ord-10", now_str),      # User 1 đã xem xong Interstellar IMAX
+            (6, 15, "order_used", "ord-13", now_str),      # User 4 đã xem xong Interstellar IMAX
+            (8, 16, "order_used", "ord-14", now_str),      # User 6 đã xem xong Ma Da
+            (2, 8, "order_used", "ord-15", now_str),       # User 2 đã xem xong Inside Out 2
+            (3, 12, "order_used", "ord-16", now_str),      # User 3 đã xem xong The Wild Robot
         ]
         cur.executemany(
             "INSERT OR IGNORE INTO watch_history (user_id, movie_id, source, order_id, watched_at) VALUES (?, ?, ?, ?, ?)",
@@ -794,12 +799,20 @@ def update_settings(payload):
     return get_dashboard_state(int(payload.get("active_user_id", 1)), alpha=default_alpha, genre_filter=default_genre)
 
 
-def get_viewer_recommendations(web_user_id=None, email=None, user_id=None, full_name=None, limit=None):
+def get_viewer_recommendations(
+    web_user_id=None,
+    email=None,
+    user_id=None,
+    full_name=None,
+    limit=None,
+    alpha_override=None,
+    genre_filter_override=None,
+):
     """
     Endpoint công khai cho người xem trên Trang chủ / Chi tiết phim:
-    - CHỈ trả về danh sách phim gợi ý đã được tạo theo cấu hình Admin & svd_model.pkl.
+    - Trả về danh sách phim gợi ý theo đúng cấu hình Admin (recommendation_settings) & svd_model.pkl.
     - Loại trừ toàn bộ phim người xem đã xem / đặt vé / đánh giá (từ watch_history & website_ratings).
-    - Nếu người xem vừa xem xong phim mới bên A (chưa kịp retrain SVD), tự động tăng điểm cho phim cùng thể loại
+    - Nếu người xem vừa xem xong phim mới trên Web (chưa kịp retrain SVD), tự động tăng điểm cho phim cùng thể loại
       để đề xuất thêm phim phù hợp ngay lập tức!
     """
     init_db(False)
@@ -808,7 +821,8 @@ def get_viewer_recommendations(web_user_id=None, email=None, user_id=None, full_
     cur = conn.cursor()
 
     settings = get_settings(cur)
-    if not settings["home_enabled"]:
+    is_preview = (alpha_override is not None) or (genre_filter_override is not None)
+    if not settings["home_enabled"] and not is_preview:
         conn.close()
         return {
             "enabled": False,
@@ -816,6 +830,7 @@ def get_viewer_recommendations(web_user_id=None, email=None, user_id=None, full_
             "is_personalized": False,
             "watched_movies": [],
             "recommendations": [],
+            "applied_settings": settings,
         }
 
     is_logged_in = bool(web_user_id or email or user_id)
@@ -823,9 +838,10 @@ def get_viewer_recommendations(web_user_id=None, email=None, user_id=None, full_
     conn.commit()
 
     movies = [dict(r) for r in cur.execute("SELECT * FROM movies ORDER BY id").fetchall()]
-    max_items = int(limit) if limit is not None else int(settings["home_limit"])
-    alpha_val = float(settings["default_alpha"])
-    genre_filter = settings["default_genre_filter"]
+    max_items = int(limit) if (limit is not None and int(limit) > 0) else int(settings["home_limit"])
+    alpha_val = float(alpha_override) if alpha_override is not None else float(settings["default_alpha"])
+    alpha_val = max(0.0, min(1.0, alpha_val))
+    genre_filter = str(genre_filter_override if genre_filter_override is not None else settings["default_genre_filter"] or "ALL").strip()
 
     watched_rows = []
     watched_ids = set()
@@ -917,7 +933,7 @@ def get_viewer_recommendations(web_user_id=None, email=None, user_id=None, full_
                     (w["title"] for w in recent_watched_titles if any(g in w["genres"].split("|") for g in movie_gs)),
                     recent_watched_titles[0]["title"],
                 )
-                reason = f"Vì bạn đã xem {anchor} · Hợp gu {', '.join(matched_vi[:2])}"
+                reason = f"Vì bạn đã xem {anchor} · Hợp sở thích {', '.join(matched_vi[:2])}"
             else:
                 reason = f"Phù hợp thể loại {', '.join(matched_vi[:2])}"
         else:
@@ -927,12 +943,18 @@ def get_viewer_recommendations(web_user_id=None, email=None, user_id=None, full_
             matched_vi = [GENRE_VI_MAP.get(g, g) for g in movie_gs[:2]]
             reason = f"Đề xuất nổi bật · Thể loại {', '.join(matched_vi)}"
 
+        genres_vi = ", ".join(GENRE_VI_MAP.get(g, g) for g in movie_gs)
         candidates.append({
             "movie_id": mid,
             "web_film_id": m["web_film_id"],
             "title": m["title"],
-            "genres": m["genres"],
+            "genres": genres_vi,
+            "genres_en": m["genres"],
             "score": final_score,
+            "predicted_rating": final_score,
+            "svd_score": pred["svd_score"] if uid is not None else final_score,
+            "genre_score": pred["genre_score"] if uid is not None else final_score,
+            "genre_match_pct": pred["genre_match_pct"] if uid is not None else 0.0,
             "_sort_score": raw_sort_score,
             "reason": reason,
         })
@@ -943,11 +965,18 @@ def get_viewer_recommendations(web_user_id=None, email=None, user_id=None, full_
     conn.close()
 
     return {
-        "enabled": True,
+        "enabled": bool(settings["home_enabled"]),
         "section_title": settings["section_title"],
         "is_personalized": uid is not None,
         "watched_movies": recent_watched_titles,
         "recommendations": candidates[:max_items],
+        "applied_settings": {
+            "alpha": alpha_val,
+            "genre_filter": genre_filter,
+            "home_limit": max_items,
+            "home_enabled": bool(settings["home_enabled"]),
+            "section_title": settings["section_title"],
+        },
     }
 
 
@@ -1390,6 +1419,8 @@ if __name__ == "__main__":
             user_id=payload.get("user_id"),
             full_name=payload.get("full_name"),
             limit=payload.get("limit"),
+            alpha_override=payload.get("alpha"),
+            genre_filter_override=payload.get("genre_filter"),
         )
         print(json.dumps(res, ensure_ascii=False))
     elif cmd == "activity":

@@ -282,12 +282,12 @@ export default function Chatbot({ go, user }) {
         "Còn bao nhiêu vé chờ duyệt?",
         "Kiểm tra mã MVX-77410",
         "Lịch chiếu hôm nay ở Hà Nội",
-        "Gợi ý phim hợp gu tôi (SVD)",
+        "Gợi ý phim theo sở thích (SVD)",
         "Có mã giảm giá nào?",
       ]
     : [
         "Lịch chiếu hôm nay ở Hà Nội",
-        "Gợi ý phim hợp gu tôi (SVD)",
+        "Gợi ý phim theo sở thích (SVD)",
         "Vé của tôi thế nào rồi?",
         "Có mã giảm giá nào?",
         "Tôi 15 tuổi xem phim gì?",
@@ -927,6 +927,7 @@ export default function Chatbot({ go, user }) {
     // 2. Gợi ý cá nhân hóa trực tiếp từ SVD (AI_Recommendation)
     if (
       raw.includes("svd") ||
+      raw.includes("sở thích") ||
       raw.includes("hợp gu") ||
       raw.includes("gợi ý") ||
       raw.includes("xem gì") ||
@@ -1345,7 +1346,7 @@ export default function Chatbot({ go, user }) {
 
     // Mặc định: Trả lời hướng dẫn các khả năng
     return {
-      text: "Bạn có thể hỏi tôi theo ngôn ngữ tự nhiên như:\n• \"Tôi muốn xem lịch chiếu ngày 20/11 các rạp ở Hà Nội\"\n• \"Gợi ý phim hợp gu tôi (SVD)\"\n• \"Vé của tôi hoặc mã MVX-77410\"\n• \"Có mã khuyến mãi nào đang dùng được?\"\n• \"Tôi 15 tuổi tối nay xem phim gì?\"\nHoặc chọn nhanh các gợi ý phía trên nhé!",
+      text: "Bạn có thể hỏi tôi theo ngôn ngữ tự nhiên như:\n• \"Tôi muốn xem lịch chiếu ngày 20/11 các rạp ở Hà Nội\"\n• \"Gợi ý phim theo sở thích (SVD)\"\n• \"Vé của tôi hoặc mã MVX-77410\"\n• \"Có mã khuyến mãi nào đang dùng được?\"\n• \"Tôi 15 tuổi tối nay xem phim gì?\"\nHoặc chọn nhanh các gợi ý phía trên nhé!",
       toolsUsed: [],
       actions: [],
     };

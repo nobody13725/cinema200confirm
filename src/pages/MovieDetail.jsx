@@ -78,22 +78,37 @@ export default function MovieDetail({ go, goBack, params, user }) {
       });
       setVerifiedReviewerNames(verifiedSet);
     }
-    Promise.allSettled([
-      cfService.getRecommendationsByUser(user?.id || "guest", 6),
-      cfService.getViewerRecommendations(user, 6),
-    ]).then(([aiRes, cfgRes]) => {
-      const aiData = aiRes.status === "fulfilled" ? aiRes.value : null;
-      const cfgData = cfgRes.status === "fulfilled" ? cfgRes.value : null;
-      if (aiData && Array.isArray(aiData.recommendations)) {
-        setViewerRecs({
-          enabled: cfgData ? cfgData.enabled !== false : true,
-          watched_movies: cfgData?.watched_movies || [],
-          recommendations: aiData.recommendations,
+    cfService
+      .getViewerRecommendations(user, 6)
+      .then((cfgData) => {
+        if (cfgData && Array.isArray(cfgData.recommendations)) {
+          setViewerRecs(cfgData);
+          return;
+        }
+        return cfService.getRecommendationsByUser(user?.id || "guest", 6).then((aiData) => {
+          if (aiData && Array.isArray(aiData.recommendations)) {
+            setViewerRecs({
+              enabled: true,
+              watched_movies: [],
+              recommendations: aiData.recommendations,
+            });
+          }
         });
-      } else if (cfgData) {
-        setViewerRecs(cfgData);
-      }
-    });
+      })
+      .catch(() => {
+        cfService
+          .getRecommendationsByUser(user?.id || "guest", 6)
+          .then((aiData) => {
+            if (aiData && Array.isArray(aiData.recommendations)) {
+              setViewerRecs({
+                enabled: true,
+                watched_movies: [],
+                recommendations: aiData.recommendations,
+              });
+            }
+          })
+          .catch(() => {});
+      });
   };
 
   useEffect(() => {

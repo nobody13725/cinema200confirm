@@ -231,7 +231,12 @@ function initLocalDb() {
       mergeMissingById("rooms", INITIAL_ROOMS);
       mergeMissingById("films", INITIAL_FILMS);
       mergeMissingById("combofoods", INITIAL_COMBOFOODS);
-      mergeMissingById("comments", INITIAL_COMMENTS);
+      mergeMissingById("comments", INITIAL_COMMENTS, (cur, initCm) => {
+        if (cur.id === "cm-5" && cur.userName === "spambot_warning" && cur.userId === "usr-3") {
+          return { ...cur, userId: initCm.userId };
+        }
+        return null;
+      });
 
       // Bảo đảm lịch chiếu luôn khớp với ngày hiện tại và bổ sung các suất mới
       const todayStr = getTodayStr(0);
@@ -248,7 +253,17 @@ function initLocalDb() {
       }
 
       // Bảo đảm luôn có đầy đủ đơn vé mẫu (confirmed, used, pending, cancelled)
-      mergeMissingById("orders", INITIAL_ORDERS);
+      mergeMissingById("orders", INITIAL_ORDERS, (cur, initOrd) => {
+        if (cur.id === "ord-11" && cur.filmId === "film-16" && cur.orderStatus === "pending") {
+          return {
+            ...cur,
+            filmId: initOrd.filmId,
+            filmTitle: initOrd.filmTitle,
+            posterUrl: initOrd.posterUrl,
+          };
+        }
+        return null;
+      });
 
       if (changed) {
         localStorage.setItem(STORAGE_KEY_DB, JSON.stringify(db));

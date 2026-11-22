@@ -5,45 +5,6 @@ export default function Login({ go, goBack, onLogin, params }) {
   const [form, setForm] = useState({ identity: "", password: "" });
   const [error, setError] = useState("");
 
-  const sampleAccounts = [
-    {
-      role: "admin",
-      label: "Quản trị viên (Admin)",
-      identity: "admin@movix.vn",
-      password: "123",
-      badge: "Toàn quyền hệ thống",
-      badgeColor: "var(--red-500)",
-      icon: "🛡️",
-    },
-    {
-      role: "employee",
-      label: "Nhân viên (Phân quyền)",
-      identity: "nhanvien@movix.vn",
-      password: "123",
-      badge: "Nhân viên",
-      badgeColor: "var(--purple-500)",
-      icon: "💼",
-    },
-    {
-      role: "customer",
-      label: "Thành viên (Khách hàng)",
-      identity: "thangnguyen13725@gmail.com",
-      password: "123",
-      badge: "Thành viên",
-      badgeColor: "var(--brand-600)",
-      icon: "👤",
-    },
-    {
-      role: "locked",
-      label: "Tài khoản bị khóa",
-      identity: "khoa@movix.vn",
-      password: "123",
-      badge: "Tạm khóa",
-      badgeColor: "var(--red-500)",
-      icon: "🔒",
-    },
-  ];
-
   function submit(e) {
     e.preventDefault();
     const rawId = form.identity.trim();
@@ -88,47 +49,9 @@ export default function Login({ go, goBack, onLogin, params }) {
     }
   }
 
-  function handleQuickLogin(acc) {
-    const users = dbService.getUsers();
-    let target = users.find(
-      (u) =>
-        u.email?.toLowerCase() === acc.identity.toLowerCase() ||
-        u.username?.toLowerCase() === acc.identity.toLowerCase()
-    );
-
-    if (!target) {
-      // Nếu chưa có, tạo theo mẫu an toàn
-      target = {
-        id: acc.role === "admin" ? "usr-admin-01" : `usr-${Date.now()}`,
-        fullName: acc.label.replace(/\s*\(.*?\)/, ""),
-        username: acc.identity.split("@")[0],
-        email: acc.identity,
-        role: acc.role,
-        status: "Hoạt động",
-      };
-    }
-
-    onLogin(target);
-    if (
-      target.role === "admin" ||
-      target.role === "administrator" ||
-      target.role === "employee" ||
-      target.role === "staff"
-    ) {
-      go("admin");
-    } else {
-      go("home");
-    }
-  }
-
-  function fillAccount(acc) {
-    setForm({ identity: acc.identity, password: acc.password });
-    setError("");
-  }
-
   return (
     <div className="auth-wrap">
-      <div className="auth-card" style={{ maxWidth: 460 }}>
+      <div className="auth-card" style={{ maxWidth: 440 }}>
         <div style={{ marginBottom: 12 }}>
           <button
             type="button"
@@ -143,84 +66,14 @@ export default function Login({ go, goBack, onLogin, params }) {
         <div className="auth-logo">
           <div className="brand-mark">🎬</div>
           <h2>Đăng nhập Movix</h2>
-          <p>Hệ thống đặt vé xem phim & Quản trị phân quyền hoàn hảo</p>
-        </div>
-
-        {/* Bảng chọn tài khoản test nhanh theo đúng phân quyền */}
-        <div style={{ marginBottom: 20 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-600)", marginBottom: 8, textTransform: "uppercase", letterSpacing: 0.5 }}>
-            ⚡ Chọn tài khoản thử nghiệm phân quyền:
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {sampleAccounts.map((acc) => (
-              <div
-                key={acc.identity}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: "8px 12px",
-                  borderRadius: 8,
-                  border: acc.role === "admin" ? "1px solid #fed7aa" : "1px solid var(--ink-200)",
-                  background: acc.role === "admin" ? "#fffaf5" : "#f8fafc",
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontSize: 16 }}>{acc.icon}</span>
-                  <div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink-900)" }}>
-                      {acc.label}
-                    </div>
-                    <div style={{ fontSize: 11.5, color: "var(--ink-500)" }}>
-                      {acc.identity} • MK: {acc.password}
-                    </div>
-                  </div>
-                </div>
-                <div style={{ display: "flex", gap: 4 }}>
-                  <button
-                    type="button"
-                    className="btn btn-sm"
-                    style={{
-                      fontSize: 11.5,
-                      padding: "4px 8px",
-                      background: "white",
-                      border: "1px solid var(--ink-300)",
-                    }}
-                    onClick={() => fillAccount(acc)}
-                    title="Điền thông tin vào form bên dưới"
-                  >
-                    Điền
-                  </button>
-                  <button
-                    type="button"
-                    className={`btn btn-sm ${acc.role === "admin" ? "btn-primary" : "btn-secondary"}`}
-                    style={{
-                      fontSize: 11.5,
-                      padding: "4px 10px",
-                      fontWeight: 600,
-                    }}
-                    onClick={() => handleQuickLogin(acc)}
-                  >
-                    Vào ngay →
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div style={{ position: "relative", textAlign: "center", margin: "16px 0" }}>
-          <hr style={{ border: "none", borderTop: "1px solid var(--ink-200)" }} />
-          <span style={{ position: "absolute", top: -9, left: "50%", transform: "translateX(-50%)", background: "white", padding: "0 10px", fontSize: 12, color: "var(--ink-400)" }}>
-            hoặc đăng nhập thủ công
-          </span>
+          <p>Đăng nhập để đặt vé nhanh, tích điểm thành viên &amp; xem lịch sử vé</p>
         </div>
 
         <form onSubmit={submit}>
           <div className="form-group">
-            <label>Email hoặc Tên đăng nhập</label>
+            <label>Email, Tên đăng nhập hoặc SĐT</label>
             <input
-              placeholder="admin@movix.vn hoặc email của bạn..."
+              placeholder="Nhập email, tên đăng nhập hoặc SĐT..."
               value={form.identity}
               onChange={(e) => setForm({ ...form, identity: e.target.value })}
             />
@@ -229,7 +82,7 @@ export default function Login({ go, goBack, onLogin, params }) {
             <label>Mật khẩu</label>
             <input
               type="password"
-              placeholder="Nhập mật khẩu (mặc định: 123)..."
+              placeholder="Nhập mật khẩu..."
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
             />
