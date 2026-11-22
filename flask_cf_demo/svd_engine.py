@@ -1,4 +1,5 @@
 import json
+import importlib.util
 import math
 import os
 import pickle
@@ -7,6 +8,11 @@ import sqlite3
 import sys
 from datetime import datetime
 
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="strict")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="strict")
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(BASE_DIR)
 DB_PATH = os.path.join(BASE_DIR, "movix_cf.db")
@@ -14,19 +20,33 @@ MODEL_PATH = os.path.join(BASE_DIR, "svd_model.pkl")
 AI_MODULE_DIR = os.path.join(PROJECT_ROOT, "AI_Recommendation")
 
 
+def load_ai_module(module_name):
+    module_path = os.path.join(AI_MODULE_DIR, f"{module_name}.py")
+    spec = importlib.util.spec_from_file_location(f"movix_{module_name}", module_path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Không thể nạp module {module_path}")
+
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def sync_ai_recommendation(retrain_ai_model=False):
     """Đồng bộ ratings.csv, movies.csv (và model nếu được yêu cầu) sang thư mục AI_Recommendation."""
     try:
         if AI_MODULE_DIR not in sys.path:
             sys.path.insert(0, AI_MODULE_DIR)
-        from sync_data import export_from_sqlite
-
+        sync_data = load_ai_module("sync_data")
+        export_from_sqlite = sync_data.export_from_sqlite
         export_from_sqlite(include_movielens_seed=True)
         if retrain_ai_model:
-            from train_model import train_pipeline
+            train_model = load_ai_module("train_model")
+            train_pipeline = train_model.train_pipeline
             train_pipeline(verbose=False)
-    except Exception:
-        pass
+    except Exception as exc:
+        print(f"[sync_ai_recommendation] Đồng bộ AI thất bại: {exc}", file=sys.stderr)
+        return {"ok": False, "error": str(exc)}
+    return {"ok": True}
 
 # Ánh xạ danh mục Movix (cat-1..cat-7) sang chuẩn thể loại thống nhất
 CATEGORY_ID_MAP = {

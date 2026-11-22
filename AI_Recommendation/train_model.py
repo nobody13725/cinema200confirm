@@ -235,6 +235,9 @@ def train_pipeline(
 
 
 if __name__ == "__main__":
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+
     parser = argparse.ArgumentParser(description="Huấn luyện offline mô hình SVD và lưu vào model/svd_model.pkl")
     parser.add_argument("--csv", default=RATINGS_CSV_PATH, help="Đường dẫn file ratings.csv")
     parser.add_argument("--out", default=MODEL_PATH, help="Đường dẫn lưu file model (.pkl)")

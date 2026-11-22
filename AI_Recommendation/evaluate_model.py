@@ -82,6 +82,9 @@ def evaluate_saved_model(model_path: str = MODEL_PATH, verbose: bool = True) -> 
 
 
 if __name__ == "__main__":
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+
     parser = argparse.ArgumentParser(description="Đánh giá mô hình SVD đã lưu (RMSE, MAE)")
     parser.add_argument("--model", default=MODEL_PATH, help="Đường dẫn file model (.pkl)")
     parser.add_argument("--json", action="store_true", help="Xuất kết quả dạng JSON")

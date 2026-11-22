@@ -301,6 +301,9 @@ def recommend_top_n(
 
 
 if __name__ == "__main__":
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+
     parser = argparse.ArgumentParser(description="Dự đoán Top N phim gợi ý từ model SVD đã lưu")
     parser.add_argument("user_id", help="Mã tài khoản người dùng (ví dụ: usr-1, usr-2 hoặc guest)")
     parser.add_argument("--top-n", type=int, default=DEFAULT_SVD_CONFIG["top_n"], help="Số lượng phim gợi ý")

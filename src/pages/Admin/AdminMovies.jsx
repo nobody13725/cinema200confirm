@@ -187,7 +187,7 @@ export default function AdminMovies() {
           <button
             className="btn btn-secondary btn-sm"
             onClick={() => {
-              if (window.confirm("Bạn có chắc muốn khôi phục lại toàn bộ cơ sở dữ liệu mẫu với 12 phim và ảnh thật chất lượng cao?")) {
+              if (window.confirm("Bạn có chắc muốn khôi phục lại toàn bộ cơ sở dữ liệu mẫu với 18 phim và ảnh thật chất lượng cao?")) {
                 dbService.resetToInitialData();
               }
             }}

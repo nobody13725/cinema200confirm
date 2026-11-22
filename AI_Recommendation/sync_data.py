@@ -1,6 +1,7 @@
 import csv
 import os
 import sqlite3
+import sys
 from config import MOVIES_CSV_PATH, RATINGS_CSV_PATH, SQLITE_DB_PATH
 
 # Ánh xạ poster & thể loại tiếng Việt khớp 1-1 với INITIAL_FILMS trên Movix
@@ -53,7 +54,7 @@ def export_from_sqlite(include_movielens_seed: bool = True) -> dict:
     """
     Trích xuất dữ liệu thật từ SQLite (movix_cf.db) sang AI_Recommendation/ratings.csv và movies.csv.
     - user_id dùng mã định danh chuẩn của website (usr-1, usr-2, usr-3...) hoặc ml-101.. cho tập tham chiếu MovieLens.
-    - movie_id dùng mã phim chuẩn của website (film-1..film-12).
+    - movie_id dùng mã phim chuẩn của website (film-1..film-18).
     """
     if not os.path.exists(SQLITE_DB_PATH):
         return {"ok": False, "error": f"Không tìm thấy database tại {SQLITE_DB_PATH}"}
@@ -122,6 +123,9 @@ def _has_col(cur, table: str, col: str) -> bool:
 if __name__ == "__main__":
     import argparse
     import json
+
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
 
     parser = argparse.ArgumentParser(description="Xuất dữ liệu đánh giá từ SQLite sang ratings.csv & movies.csv")
     parser.add_argument("--website-only", action="store_true", help="Chỉ xuất đánh giá từ website_ratings (không gồm MovieLens seed)")

@@ -8,22 +8,46 @@ import { GoogleGenAI, Type, type FunctionDeclaration } from "@google/genai";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const DEFAULT_GEMINI_MODEL = (process.env.GEMINI_MODEL || "").trim() || "gemini-4-hydrogen";
+const DEFAULT_GEMINI_MODEL = (process.env.GEMINI_MODEL || "").trim() || "gemini-3.8-flash";
 
-function getGeminiClient() {
-  const key = (process.env.GEMINI_API_KEY || "").trim();
-  if (!key || key === "MY_GEMINI_API_KEY") {
-    return null;
+function getGeminiClients() {
+  const keys = [
+    process.env.GEMINI_API_KEY,
+    process.env.GEMINI_API_KEY_BACKUP,
+  ]
+    .map((key) => (key || "").trim())
+    .filter((key) => key && key !== "MY_GEMINI_API_KEY");
+
+  return Array.from(new Set(keys)).map(
+    (apiKey) =>
+      new GoogleGenAI({
+        apiKey,
+        httpOptions: {
+          timeout: 25000,
+          headers: {
+            "User-Agent": "aistudio-build",
+          },
+        },
+      })
+  );
+}
+
+async function generateWithGeminiFallback<T>(
+  clients: GoogleGenAI[],
+  generate: (client: GoogleGenAI) => Promise<T>
+): Promise<T> {
+  let lastError: unknown;
+  for (const [index, client] of clients.entries()) {
+    try {
+      return await generate(client);
+    } catch (error) {
+      lastError = error;
+      if (index < clients.length - 1) {
+        console.warn("[Gemini] Primary request failed; retrying with backup key.");
+      }
+    }
   }
-  return new GoogleGenAI({
-    apiKey: key,
-    httpOptions: {
-      timeout: 18000,
-      headers: {
-        "User-Agent": "aistudio-build",
-      },
-    },
-  });
+  throw lastError instanceof Error ? lastError : new Error("Gemini request failed.");
 }
 
 const MOVIX_CHAT_TOOLS: FunctionDeclaration[] = [
@@ -267,14 +291,23 @@ function runPythonScript(scriptPath: string, args: string[], stdinPayload?: unkn
   }
   if (result.status !== 0) {
     const errText = result.stderr || result.stdout || "Python engine execution failed";
+    let message = errText;
     try {
-      const parsed = JSON.parse(errText);
-      const err = new Error(parsed.error || errText);
-      (err as Error & { statusCode?: number }).statusCode = 400;
-      throw err;
+      const parsed: unknown = JSON.parse(errText);
+      if (
+        parsed &&
+        typeof parsed === "object" &&
+        "error" in parsed &&
+        typeof parsed.error === "string"
+      ) {
+        message = parsed.error;
+      }
     } catch {
-      throw new Error(errText);
+      // Python may return plain-text stderr instead of JSON.
     }
+    const error = new Error(message) as Error & { statusCode?: number };
+    error.statusCode = 400;
+    throw error;
   }
   return JSON.parse(result.stdout);
 }
@@ -329,11 +362,15 @@ async function startServer() {
     try {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 900);
-      const fastRes = await fetch(
-        `${fastApiBase}/api/recommendations/${encodeURIComponent(userId)}?top_n=${topN}`,
-        { signal: controller.signal }
-      );
-      clearTimeout(timer);
+      let fastRes: Response;
+      try {
+        fastRes = await fetch(
+          `${fastApiBase}/api/recommendations/${encodeURIComponent(userId)}?top_n=${topN}`,
+          { signal: controller.signal }
+        );
+      } finally {
+        clearTimeout(timer);
+      }
       if (fastRes.ok) {
         const fastData = await fastRes.json();
         return res.json({ ...fastData, via: "fastapi" });
@@ -481,8 +518,8 @@ async function startServer() {
 
   // API (AI Chatbot - Bước 2): Gemini Function Calling kết nối dữ liệu thật Movix & SVD
   app.post("/api/chat", async (req, res) => {
-    const ai = getGeminiClient();
-    if (!ai) {
+    const aiClients = getGeminiClients();
+    if (aiClients.length === 0) {
       return res.status(503).json({
         error:
           "Chưa cấu hình GEMINI_API_KEY trong Settings > Secrets (hoặc file .env) trên máy chủ để dùng chế độ Gemini AI.",
@@ -497,7 +534,7 @@ async function startServer() {
     }
 
     const user = body.user && typeof body.user === "object" ? body.user : null;
-    const history = Array.isArray(body.history) ? body.history.slice(-8) : [];
+    const history = Array.isArray(body.history) ? body.history.slice(-6) : [];
     const ctx = body.contextSnapshot && typeof body.contextSnapshot === "object" ? body.contextSnapshot : {};
 
     const films = Array.isArray(ctx.films) ? ctx.films : [];
@@ -882,6 +919,7 @@ async function startServer() {
           label,
         };
         pushAction(`nav:${dest}:${JSON.stringify(navParams)}`, navAction);
+        if (args.auto_redirect === true) autoNavigateTarget = navAction;
 
         return {
           buttonCreated: true,
@@ -1080,45 +1118,43 @@ async function startServer() {
       .join("\n");
 
     const systemInstruction = [
-      "Bạn là Trợ lý AI thông minh chính thức của hệ thống rạp chiếu phim Movix.",
+      "Bạn là trợ lý Movix. Trả lời bằng tiếng Việt tự nhiên, súc tích; chỉ hỗ trợ phim, gợi ý SVD, lịch chiếu/rạp, vé, giá/combo, khuyến mãi, lịch sử xem/đánh giá và hướng dẫn ứng dụng.",
       userSummary,
-      `Ngày giờ hiện tại tại trình duyệt của khách: ${todayYMD} ${nowHM}.`,
-      "Danh mục phim hiện có trên Movix:\n" + (catalogFilmDigest || "(chưa có dữ liệu phim)"),
-      "Hệ thống rạp Movix:\n" + (cinemaDigest || "(chưa có dữ liệu rạp)"),
-      "Quy tắc suy luận thông minh & bắt buộc:",
-      "1. Hiểu ngữ cảnh hội thoại nhiều lượt (multi-turn): Nếu khách hỏi nối tiếp như 'phim đó', 'thế còn ngày mai?', 'ở Sài Gòn thì sao?', 'đặt vé luôn', hãy tự suy ra tên phim/thành phố/rạp từ các tin nhắn ngay trước đó trong lịch sử hội thoại.",
-      "2. Chỉ trả lời các chủ đề liên quan đến điện ảnh, gợi ý phim SVD, lịch chiếu, rạp, tính tiền vé & combo, khuyến mãi, tra cứu vé, lịch sử đã xem và quy trình duyệt vé/đánh giá tại Movix.",
-      "3. LUÔN dùng Function Calling để lấy dữ liệu chính xác theo thời gian thực (giờ chiếu, ghế trống, điểm SVD, mã giảm giá, đơn vé). Có thể gọi nhiều tool song song trong 1 lượt để trả lời nhanh nhất và tránh timeout.",
-      "4. Khi khách hỏi tổng hợp nhiều điều kiện (vd: '15 tuổi tối nay ở Hà Nội xem phim hành động nào đủ 4 ghế?'), hãy truyền đồng thời max_age, time_of_day, city, date, genre, min_seats vào search_movies_and_showtimes.",
-      "5. Nếu khách hỏi thời gian đếm ngược/chờ đợi (vd: 'bao nhiêu giờ nữa thì ngày mai phim X chiếu', 'mấy tiếng nữa', 'suất sớm nhất'), HÃY trả lời thẳng khoảng thời gian còn lại (dùng trường timeUntilText của earliestShowtimeSummary), tên rạp và giờ bắt đầu — KHÔNG liệt kê tràn lan toàn bộ lịch chiếu.",
-      "6. Khi khách hỏi tính tổng chi phí vé + combo + mã giảm giá, gọi get_ticket_pricing_and_combos với số lượng từng loại ghế và mã khuyến mãi để tính chính xác từng đồng.",
-      "7. Khi khách muốn mở trang với bộ lọc (Lịch chiếu theo ngày/thành phố, Rạp, Phim, Khuyến mãi, Hồ sơ), gọi search_movies_and_showtimes VÀ/HOẶC navigate_movix_page để tạo nút bấm sẵn bộ lọc.",
-      "8. Trả lời bằng tiếng Việt tự nhiên, súc tích, rõ ràng, KHÔNG dùng ký tự markdown thô như ** hoặc ## vì khung chat hiển thị văn bản thuần. Nhắc nhẹ ưu đãi/nút đặt vé liên quan khi thực sự hữu ích.",
-      "9. Tuân thủ giới hạn độ tuổi nghiêm ngặt (không gợi ý C18/T18/T16/T13 cho khán giả chưa đủ tuổi) và nếu user là employee thì không tiết lộ doanh thu hay chức năng Admin.",
+      `Giờ địa phương: ${todayYMD} ${nowHM}.`,
+      "Phim:\n" + (catalogFilmDigest || "(chưa có dữ liệu phim)"),
+      "Rạp:\n" + (cinemaDigest || "(chưa có dữ liệu rạp)"),
+      "Dùng ngữ cảnh hội thoại gần nhất cho câu hỏi nối tiếp. Dùng function tools để tra dữ liệu hiện thời; truyền đủ mọi điều kiện người dùng nêu như tuổi, ngày/giờ, thành phố, thể loại và số ghế.",
+      "Khi hỏi thời gian chờ suất chiếu, nêu thời gian còn lại, rạp và giờ bắt đầu; không liệt kê dư lịch chiếu. Khi muốn mở trang/bộ lọc, dùng navigate_movix_page.",
+      "Tính tiền bằng get_ticket_pricing_and_combos. Tuân thủ giới hạn tuổi phim; không tiết lộ doanh thu hoặc chức năng quản trị cho nhân viên.",
+      "Không dùng markdown thô (** hoặc ##).",
     ].join("\n");
 
     try {
       const contents: Array<Record<string, unknown>> = [];
       for (const h of history) {
         if (h && typeof h.text === "string" && h.text.trim()) {
+          const text = h.text.trim();
+          const recentText = text.length > 1200 ? `...[đã rút gọn lịch sử]...\n${text.slice(-1200)}` : text;
           contents.push({
             role: h.sender === "user" ? "user" : "model",
-            parts: [{ text: h.text.trim() }],
+            parts: [{ text: recentText }],
           });
         }
       }
       contents.push({ role: "user", parts: [{ text: message }] });
 
       const toolsUsed: string[] = [];
-      let response = await ai.models.generateContent({
-        model: DEFAULT_GEMINI_MODEL,
-        contents: contents as never,
-        config: {
-          systemInstruction,
-          temperature: 0.35,
-          tools: [{ functionDeclarations: MOVIX_CHAT_TOOLS }],
-        },
-      });
+      let response = await generateWithGeminiFallback(aiClients, (ai) =>
+        ai.models.generateContent({
+          model: DEFAULT_GEMINI_MODEL,
+          contents: contents as never,
+          config: {
+            systemInstruction,
+            temperature: 0.35,
+            tools: [{ functionDeclarations: MOVIX_CHAT_TOOLS }],
+          },
+        })
+      );
 
       for (let step = 0; step < 3; step++) {
         const calls = response.functionCalls;
@@ -1152,15 +1188,17 @@ async function startServer() {
           parts: responseParts,
         });
 
-        response = await ai.models.generateContent({
-          model: DEFAULT_GEMINI_MODEL,
-          contents: contents as never,
-          config: {
-            systemInstruction,
-            temperature: 0.35,
-            tools: [{ functionDeclarations: MOVIX_CHAT_TOOLS }],
-          },
-        });
+        response = await generateWithGeminiFallback(aiClients, (ai) =>
+          ai.models.generateContent({
+            model: DEFAULT_GEMINI_MODEL,
+            contents: contents as never,
+            config: {
+              systemInstruction,
+              temperature: 0.35,
+              tools: [{ functionDeclarations: MOVIX_CHAT_TOOLS }],
+            },
+          })
+        );
       }
 
       const replyText = (response.text || "").trim() || "Tôi đã kiểm tra dữ liệu Movix cho bạn, mời bạn xem các gợi ý bên dưới nhé!";
@@ -1201,20 +1239,6 @@ async function startServer() {
             : undefined,
       });
     }
-  });
-
-  // Download Word (.docx) tài liệu hướng dẫn thuyết trình & demo SVD
-  app.get(["/api/docs/svd-demo.docx", "/Huong_Dan_Thuyet_Trinh_Demo_SVD.docx"], (_req, res) => {
-    const docxPath = path.resolve(__dirname, "public/Huong_Dan_Thuyet_Trinh_Demo_SVD.docx");
-    res.setHeader(
-      "Content-Type",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-    );
-    res.setHeader(
-      "Content-Disposition",
-      'attachment; filename="Huong_Dan_Thuyet_Trinh_Demo_SVD.docx"'
-    );
-    res.sendFile(docxPath);
   });
 
   // Vite middleware for development; static assets for production
